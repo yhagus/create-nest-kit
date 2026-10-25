@@ -1,0 +1,55 @@
+# Reusable: runs scripts/matrix.ts with one GitHub job per combo, so combos run in parallel.
+name: Matrix
+
+on:
+  workflow_call:
+    inputs:
+      subset:
+        description: pr (20 combos, pairwise) or all (80)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  list:
+    name: List ${{ inputs.subset }} combos
+    runs-on: ubuntu-latest
+    outputs:
+      ids: ${{ steps.list.outputs.ids }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - id: list
+        run: echo "ids=$(node scripts/matrix.ts --list --subset "$SUBSET")" >> "$GITHUB_OUTPUT"
+        env:
+          SUBSET: ${{ inputs.subset }}
+
+  combo:
+    name: ${{ matrix.combo }}
+    needs: list
+    # Combos whose layers are still planned are not listed; an empty matrix would fail the run.
+    if: needs.list.outputs.ids != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        combo: ${{ fromJSON(needs.list.outputs.ids) }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      # Ubuntu runners ship Docker, which the generated projects' Testcontainers tests need.
+      - run: node scripts/matrix.ts --subset "$SUBSET" --only "$COMBO"
+        env:
+          SUBSET: ${{ inputs.subset }}
+          COMBO: ${{ matrix.combo }}
+          MATRIX_DIR: ${{ runner.temp }}/matrix
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: matrix-logs-${{ matrix.combo }}
+          path: ${{ runner.temp }}/matrix/*.log
+          retention-days: 14

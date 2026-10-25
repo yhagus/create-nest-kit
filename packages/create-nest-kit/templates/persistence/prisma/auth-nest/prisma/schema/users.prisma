@@ -1,0 +1,37 @@
+// The users and sessions tables every project has. They are declared here, next to the
+// official auth's tables, because Prisma needs both sides of every relation: Session lists the
+// refresh tokens issued for it. PrismaUsersRepository matches the explicitly named (`map:`)
+// constraint in database errors.
+
+model User {
+  id              String     @id @db.Uuid
+  email           String     @unique(map: "users_email_key")
+  passwordHash    String     @map("password_hash")
+  name            String
+  emailVerifiedAt DateTime?  @map("email_verified_at") @db.Timestamptz(3)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  roles           UserRole[]
+  sessions        Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id                String             @id @db.Uuid
+  userId            String             @map("user_id") @db.Uuid
+  userAgent         String?            @map("user_agent")
+  ip                String?
+  createdAt         DateTime           @map("created_at") @db.Timestamptz(3)
+  lastUsedAt        DateTime           @map("last_used_at") @db.Timestamptz(3)
+  expiresAt         DateTime           @map("expires_at") @db.Timestamptz(3)
+  absoluteExpiresAt DateTime           @map("absolute_expires_at") @db.Timestamptz(3)
+  revokedAt         DateTime?          @map("revoked_at") @db.Timestamptz(3)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokens     AuthRefreshToken[]
+
+  // By user for listing and revoking; by expiry for the daily purge.
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}

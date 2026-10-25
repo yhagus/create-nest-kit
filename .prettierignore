@@ -1,0 +1,14 @@
+dist
+coverage
+.matrix
+.playground
+pnpm-lock.yaml
+**/__snapshots__/**
+
+# Templates are formatted here with the root config, which a test keeps identical to the one
+# generated projects get, so `pnpm format` writes what their format:check expects. Skip what
+# their .prettierignore skips: files written by ORM tooling.
+packages/create-nest-kit/templates/**/drizzle
+packages/create-nest-kit/templates/**/prisma/migrations
+packages/create-nest-kit/templates/**/src/database/migrations
+packages/create-nest-kit/templates/**/src/generated

@@ -1,0 +1,16 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  matrix:
+    name: Matrix (all combos)
+    uses: ./.github/workflows/matrix.yml
+    with:
+      subset: all

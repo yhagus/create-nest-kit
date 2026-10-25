@@ -1,0 +1,26 @@
+{
+  "name": "create-nest-kit-workspace",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=24.15"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "oxlint",
+    "typecheck": "pnpm -r typecheck && tsc -p tsconfig.scripts.json",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "matrix": "pnpm build && node scripts/matrix.ts",
+    "pack:release": "node scripts/pack-release.ts",
+    "test:installer": "pnpm build && node scripts/pack-release.ts && node --test scripts/installer.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "oxlint": "1.89.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3"
+  }
+}

@@ -1,0 +1,19 @@
+dist
+coverage
+
+# Lockfiles and package manager files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+bun.lock
+.yarn
+.pnp.*
+
+# Written by ORM tooling, not by hand. Not every ORM is in this project; extra entries are harmless.
+# Drizzle: SQL migrations and their meta/ snapshots
+drizzle
+# Prisma: the generated client and the migrations
+src/generated
+prisma/migrations
+# TypeORM and MikroORM: generated migration classes
+src/database/migrations

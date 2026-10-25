@@ -1,0 +1,150 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renderCiWorkflow > matches the snapshot for pnpm 1`] = `
+"name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm test:e2e
+"
+`;
+
+exports[`renderDockerCompose > renders valid YAML with sorted services and named volumes 1`] = `
+"services:
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports:
+      - 8025:8025
+      - 1025:1025
+  postgres:
+    image: postgres:18-alpine
+    volumes:
+      - pgdata:/var/lib/postgresql
+volumes:
+  pgdata: {}
+"
+`;
+
+exports[`renderEnv / renderEnvExample > matches the snapshot, grouped by layer 1`] = `
+"# --- base ---
+# HTTP port
+PORT=3000
+APP_NAME=demo
+COOKIE_SECRET=generated-secret
+
+# --- database/postgres ---
+DATABASE_URL=postgres://app:app@localhost:5432/app
+
+# --- auth/jwt ---
+# Signs access tokens
+JWT_SECRET=generated-secret
+"
+`;
+
+exports[`renderPackageJson > matches the snapshot 1`] = `
+"{
+  "name": "demo",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.15"
+  },
+  "scripts": {
+    "build": "nest build",
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node src/database/seed.ts",
+    "lint": "oxlint",
+    "start:dev": "nest start --watch",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nestjs/common": "12.2.0",
+    "@nestjs/core": "12.2.0",
+    "@nestjs/platform-fastify": "12.2.0",
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
+  }
+}
+"
+`;
+
+exports[`renderReadme > matches the snapshot 1`] = `
+"# demo
+
+Generated with [create-nest-kit](https://www.npmjs.com/package/create-nest-kit).
+
+## Options
+
+| Option             | Value                              |
+| ------------------ | ---------------------------------- |
+| HTTP platform      | Fastify                            |
+| Database           | PostgreSQL                         |
+| ORM / ODM          | Drizzle                            |
+| Auth style         | Hand-rolled @nestjs/jwt + argon2id |
+| Validation library | Zod                                |
+| Email verification | on                                 |
+| CSRF protection    | on                                 |
+| Package manager    | pnpm                               |
+
+## Quickstart
+
+\`\`\`sh
+pnpm install
+docker compose up -d
+pnpm db:migrate
+pnpm db:seed
+pnpm start:dev
+\`\`\`
+
+Mail sent in development is caught by Mailpit: http://localhost:8025
+
+## Scripts
+
+| Command           | Runs                                       |
+| ----------------- | ------------------------------------------ |
+| \`pnpm build\`      | \`nest build\`                               |
+| \`pnpm db:migrate\` | \`drizzle-kit migrate\`                      |
+| \`pnpm db:seed\`    | \`node src/database/seed.ts\`                |
+| \`pnpm lint\`       | \`oxlint\`                                   |
+| \`pnpm start:dev\`  | \`nest start --watch\`                       |
+| \`pnpm test\`       | \`vitest run\`                               |
+| \`pnpm test:e2e\`   | \`vitest run --config vitest.e2e.config.ts\` |
+| \`pnpm typecheck\`  | \`tsc --noEmit\`                             |
+
+## Architecture
+
+Shared code lives in \`src/\`.
+
+## Authentication
+
+Email verification is on.
+"
+`;

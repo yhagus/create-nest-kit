@@ -1,0 +1,57 @@
+// The records of @nestjs/authentication's stores. User ids are the package's opaque strings,
+// so `user_id` is text without a foreign key. Index and constraint names match the other ORMs'.
+
+/// Refresh tokens (RefreshTokenRecord), stored by the SHA-256 of the token. A family counts as
+/// revoked when any of its tokens is, so a revocation also covers tokens a racing refresh saves
+/// after it. `session_id` is the device session of the sign-in (`claims.sid`); its tokens go
+/// when the session row does.
+model AuthRefreshToken {
+  id              String    @id
+  familyId        String    @map("family_id")
+  userId          String    @map("user_id")
+  sessionId       String?   @map("session_id") @db.Uuid
+  createdAt       DateTime  @map("created_at") @db.Timestamptz(3)
+  expiresAt       DateTime  @map("expires_at") @db.Timestamptz(3)
+  familyExpiresAt DateTime  @map("family_expires_at") @db.Timestamptz(3)
+  usedAt          DateTime? @map("used_at") @db.Timestamptz(3)
+  revoked         Boolean   @default(false)
+  claims          Json?
+  session         Session?  @relation(fields: [sessionId], references: [id], onDelete: Cascade, map: "auth_refresh_tokens_session_id_sessions_id_fk")
+
+  @@index([familyId], map: "auth_refresh_tokens_family_id_index")
+  @@index([userId], map: "auth_refresh_tokens_user_id_index")
+  @@index([sessionId], map: "auth_refresh_tokens_session_id_index")
+  @@index([familyExpiresAt], map: "auth_refresh_tokens_family_expires_at_index")
+  @@map("auth_refresh_tokens")
+}
+
+/// Password-reset and email-verification links, by the SHA-256 of the token.
+model AuthEmailToken {
+  id          String   @id
+  purpose     String
+  userId      String   @map("user_id")
+  email       String
+  fingerprint String?
+  createdAt   DateTime @map("created_at") @db.Timestamptz(3)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([userId, purpose], map: "auth_email_tokens_user_id_purpose_index")
+  @@index([expiresAt], map: "auth_email_tokens_expires_at_index")
+  @@map("auth_email_tokens")
+}
+
+/// Cookie sessions (SessionRecord). This app signs in with tokens and keeps device sessions in
+/// `sessions`, so the table stays empty, but password reset needs a session store to end them in.
+model AuthSession {
+  id           String   @id
+  userId       String   @map("user_id")
+  createdAt    DateTime @map("created_at") @db.Timestamptz(3)
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(3)
+  lastActiveAt DateTime @map("last_active_at") @db.Timestamptz(3)
+  mfa          String?
+  metadata     Json?
+
+  @@index([userId], map: "auth_sessions_user_id_index")
+  @@index([expiresAt], map: "auth_sessions_expires_at_index")
+  @@map("auth_sessions")
+}

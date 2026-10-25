@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Build, lint, format, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  installer:
+    name: Installer (shellcheck, Docker scenarios)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      # Builds, packs release/ and runs scripts/installer.test.ts; the runner has shellcheck and Docker.
+      - run: pnpm test:installer
+
+  matrix:
+    name: Matrix (PR subset)
+    needs: check
+    uses: ./.github/workflows/matrix.yml
+    with:
+      subset: pr

@@ -1,0 +1,43 @@
+# On a pushed tag vX.Y.Z: checks everything, packs the CLI and publishes a GitHub Release with
+# create-nest-kit.tar.gz and its .sha256, the assets install.sh downloads. Nothing goes to npm.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - name: Check the tag matches the package version
+        run: |
+          version=$(node -p "require('./packages/create-nest-kit/package.json').version")
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::Tag $TAG does not match packages/create-nest-kit/package.json version $version"
+            exit 1
+          fi
+        env:
+          TAG: ${{ github.ref_name }}
+      - run: node scripts/pack-release.ts
+      - name: Smoke-test install.sh against the packed archive
+        run: NEST_KIT_DOWNLOAD_URL="file://$PWD/release" sh install.sh smoke-api --yes --dry-run
+      - name: Create the GitHub Release
+        run: gh release create "$TAG" release/* --generate-notes --title "$TAG"
+        env:
+          TAG: ${{ github.ref_name }}
+          GH_TOKEN: ${{ github.token }}

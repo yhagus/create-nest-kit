@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src", "test", "scripts", "vitest.config.ts"],
+  "exclude": ["test/fixtures/templates"]
+}

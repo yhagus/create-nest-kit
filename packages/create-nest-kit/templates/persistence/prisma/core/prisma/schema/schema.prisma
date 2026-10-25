@@ -1,0 +1,15 @@
+// Prisma reads every .prisma file in this folder as one schema (see prisma7.config.ts).
+// roles.prisma holds the auth-independent models. The User and Session models live with the
+// auth style's own tables (users.prisma), because Prisma needs both sides of every relation.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+// The connection URL comes from prisma7.config.ts (CLI) and PrismaService (app).
+datasource db {
+  provider = "postgresql"
+}

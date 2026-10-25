@@ -1,0 +1,63 @@
+{
+  "name": "create-nest-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Wizard installer for a NestJS 12 API: pick the HTTP platform, database, ORM and auth style; get the same modules and HTTP contract.",
+  "keywords": [
+    "nestjs",
+    "nest",
+    "create",
+    "scaffold",
+    "boilerplate",
+    "starter",
+    "api",
+    "fastify",
+    "express",
+    "postgres",
+    "mongodb",
+    "drizzle",
+    "prisma",
+    "typeorm",
+    "mikroorm",
+    "mongoose",
+    "jwt"
+  ],
+  "homepage": "https://github.com/yhagus/create-nest-kit#readme",
+  "bugs": {
+    "url": "https://github.com/yhagus/create-nest-kit/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yhagus/create-nest-kit.git",
+    "directory": "packages/create-nest-kit"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-nest-kit": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=24.15"
+  },
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@clack/prompts": "1.8.1",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "esbuild": "0.28.2",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}
