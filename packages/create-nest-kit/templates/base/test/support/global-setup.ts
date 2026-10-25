@@ -1,4 +1,5 @@
 import { RedisContainer } from '@testcontainers/redis';
+import { inspect } from 'node:util';
 import type { TestProject } from 'vitest/node';
 import { startDatabase } from './database.global-setup.js';
 
@@ -13,13 +14,20 @@ declare module 'vitest' {
 
 /** Starts the containers once for the whole run; test files read their URLs with `inject()`. */
 export default async function setup(project: TestProject): Promise<() => Promise<void>> {
-  const [redis, database] = await Promise.all([
-    new RedisContainer(REDIS_IMAGE).start(),
-    startDatabase(),
-  ]);
-  project.provide('containerEnv', { REDIS_URL: redis.getConnectionUrl(), ...database.env });
+  try {
+    const [redis, database] = await Promise.all([
+      new RedisContainer(REDIS_IMAGE).start(),
+      startDatabase(),
+    ]);
+    project.provide('containerEnv', { REDIS_URL: redis.getConnectionUrl(), ...database.env });
 
-  return async () => {
-    await Promise.all([redis.stop(), database.stop()]);
-  };
+    return async () => {
+      await Promise.all([redis.stop(), database.stop()]);
+    };
+  } catch (error) {
+    // Vitest can hide a failed global setup behind its own "code.charCodeAt is not a function",
+    // so print the real error before rethrowing it.
+    console.error('Test containers failed to start:', inspect(error, { depth: 5 }));
+    throw error;
+  }
 }
