@@ -14,7 +14,11 @@ export interface StartedMongoDB {
  * host name only the container knows, so clients connect to it directly.
  */
 export async function startMongoDB(): Promise<StartedMongoDB> {
-  const container = await new MongoDBContainer(MONGODB_IMAGE).start();
+  const container = await new MongoDBContainer(MONGODB_IMAGE)
+    // MongoDB 8 refuses to start on Linux kernels 6.19 to 7.0.13 (SERVER-121912) unless glibc keeps
+    // rseq. docker-compose.yml sets the same; remove both once MongoDB ships a fix.
+    .withEnvironment({ GLIBC_TUNABLES: 'glibc.pthread.rseq=1' })
+    .start();
   const uri = new URL(container.getConnectionString());
   uri.pathname = `/${DATABASE_NAME}`;
   uri.searchParams.set('directConnection', 'true');

@@ -14,6 +14,13 @@ const INITIATE_REPLICA_SET = [
   'quit(db.hello().isWritablePrimary ? 0 : 1)',
 ].join(' ');
 
+/**
+ * MongoDB 8 refuses to start on Linux kernels 6.19 to 7.0.13 (SERVER-121912): its allocator's use
+ * of rseq breaks there. Letting glibc keep rseq makes it fall back to per-thread caches and start.
+ * The official image sets `glibc.pthread.rseq=0`, so this overrides it. Remove once fixed upstream.
+ */
+export const MONGODB_KERNEL_WORKAROUND = { GLIBC_TUNABLES: 'glibc.pthread.rseq=1' };
+
 export const mongodbLayer: LayerManifest = {
   id: 'database/mongodb',
   status: 'ready',
@@ -33,6 +40,7 @@ export const mongodbLayer: LayerManifest = {
       mongo: {
         image: 'mongo:8',
         command: ['--replSet', REPLICA_SET, '--bind_ip_all'],
+        environment: MONGODB_KERNEL_WORKAROUND,
         ports: ['27017:27017'],
         volumes: ['mongo-data:/data/db'],
         healthcheck: {
@@ -46,4 +54,13 @@ export const mongodbLayer: LayerManifest = {
     },
     volumes: ['mongo-data'],
   },
+  readme: [
+    {
+      title: 'MongoDB',
+      body: `
+- The \`mongo\` service runs as a single-node replica set, because MongoDB only runs transactions on a replica set. Connections use \`directConnection=true\`.
+- It sets \`GLIBC_TUNABLES=glibc.pthread.rseq=1\`: MongoDB 8 refuses to start on Linux kernels 6.19 to 7.0.13 without it ([SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912)). The test container sets it too. Remove it once MongoDB ships a fix.
+`,
+    },
+  ],
 };
