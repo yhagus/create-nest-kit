@@ -63,6 +63,18 @@ describe('parseCliArgs', () => {
     });
   });
 
+  it('takes the package name from --name', () => {
+    expect(parseCliArgs(['.', '--name', 'billing-api']).packageName).toBe('billing-api');
+  });
+
+  it('rejects a --name that is not a valid npm package name', () => {
+    expect(() => parseCliArgs(['--name', 'Billing API'])).toThrow(
+      new UsageError(
+        '--name "Billing API" is not a valid npm package name: it contains capital letters',
+      ),
+    );
+  });
+
   it('rejects an unknown choice and lists the allowed ones', () => {
     expect(() => parseCliArgs(['--db', 'mysql'])).toThrow(
       new UsageError('--db must be one of postgres, mongodb (got "mysql")'),

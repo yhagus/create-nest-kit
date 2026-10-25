@@ -2,7 +2,13 @@ export const HELP_TEXT = `Usage: create-nest-kit [dir] [options]
 
 Scaffolds a NestJS 12 API. Any option given as a flag is not asked for.
 
+Arguments:
+  [dir]                                     Folder to create, relative to the current one. \`.\` uses the
+                                            current folder. Asked if omitted; \`nest-api\` with --yes.
+
 Options:
+  --name <package-name>                     npm package name (default: the folder's name; asked if that
+                                            isn't a valid package name)
   --platform <fastify|express>              HTTP platform (default: fastify)
   --db <postgres|mongodb>                   Database (default: postgres)
   --orm <drizzle|prisma|typeorm|mikroorm|mongoose>

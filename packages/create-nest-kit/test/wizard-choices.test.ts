@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { LayerManifest } from '../src/layers/types.ts';
 import { PLATFORM_LABELS, VALIDATION_HINTS, VALIDATION_LABELS } from '../src/labels.ts';
 import { PLATFORMS, VALIDATION_LIBRARIES } from '../src/options.ts';
-import { comboAvailability, directoryProblem, ormStep, selectStep } from '../src/wizard-choices.ts';
+import { comboAvailability, ormStep, selectStep } from '../src/wizard-choices.ts';
 
 /** Only the planned layers matter: a combo is available unless one of its layers is planned. */
 function plannedLayer(id: string, when: LayerManifest['when']): LayerManifest {
@@ -102,17 +102,5 @@ describe('ormStep', () => {
       orm: 'mongoose',
       note: 'MongoDB uses Mongoose.',
     });
-  });
-});
-
-describe('directoryProblem', () => {
-  it('rejects a directory whose name is not a valid package name', () => {
-    expect(directoryProblem('/work', 'apps/My API')).toBe(
-      '"My API" can\'t be a package name: it contains capital letters',
-    );
-  });
-
-  it('accepts a directory with a valid package name', () => {
-    expect(directoryProblem('/work', '../nest-api')).toBeUndefined();
   });
 });

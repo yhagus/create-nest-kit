@@ -11,6 +11,28 @@ curl -fsSL https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install
 See [Install](#install) for passing options, pinning a version and reading the script first. It is
 not published to npm yet, so `npm create nest-kit` does not work.
 
+## Where your project goes
+
+The URL always stays `yhagus/create-nest-kit`: that's where the installer lives. **Your** project's
+name goes in the wizard, or after `sh -s --`.
+
+The project is created **inside the folder you run the command from**:
+
+```sh
+cd ~/code/apps
+INSTALL=https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh
+curl -fsSL $INSTALL | sh                     # asks for a name, e.g. billing-api → ~/code/apps/billing-api
+curl -fsSL $INSTALL | sh -s -- billing-api   # same folder, without asking for the name
+curl -fsSL $INSTALL | sh -s -- .             # uses ~/code/apps itself (asks first if it isn't empty)
+```
+
+- A path works too: `sh -s -- services/billing-api` creates `~/code/apps/services/billing-api`.
+- You don't need an existing repository. The CLI creates the folder, and runs `git init` in it
+  unless you pass `--no-git` (or it is already inside a repository).
+- The package name (`name` in `package.json`, `APP_NAME` in `.env`) is the folder's name. When that
+  isn't a valid npm package name (say, `.` inside `My Apps`), the wizard asks for one and suggests
+  `my-apps`. Set it yourself with `--name my-apps`; with `--yes` it is required in that case.
+
 ## What you get
 
 - **Auth:** register, login, refresh-token rotation with reuse detection, logout, profile; email
@@ -41,7 +63,8 @@ SHA-256 checksum and starts the wizard:
 curl -fsSL https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh | sh
 ```
 
-Arguments after `sh -s --` go to the CLI (see [Wizard options](#wizard-options)):
+Arguments after `sh -s --` go to the CLI (see [Wizard options](#wizard-options) and
+[Where your project goes](#where-your-project-goes)):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh | sh -s -- my-api --orm prisma
@@ -85,7 +108,8 @@ Any option given as a flag is not asked for. With `--yes`, everything not given 
 
 | Option             | Choices (default first)                                                                            | Flag                                                  |
 | ------------------ | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Directory          | `nest-api`                                                                                         | positional `[dir]`                                    |
+| Project folder     | `nest-api`, created in the current folder; `.` uses the current folder itself                      | positional `[dir]`                                    |
+| Package name       | the folder's name; asked when that isn't a valid npm package name                                  | `--name <package-name>`                               |
 | HTTP platform      | Fastify · Express                                                                                  | `--platform fastify\|express`                         |
 | Database           | PostgreSQL · MongoDB                                                                               | `--db postgres\|mongodb`                              |
 | ORM / ODM          | PostgreSQL: Drizzle · Prisma 7 · TypeORM · MikroORM. MongoDB: Mongoose                             | `--orm drizzle\|prisma\|typeorm\|mikroorm\|mongoose`  |

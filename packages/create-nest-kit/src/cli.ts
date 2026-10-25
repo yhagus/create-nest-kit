@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { homedir } from 'node:os';
 import { isNodeVersionSupported, MINIMUM_NODE_VERSION } from './node-version.ts';
 
 // The version check runs before the rest of the CLI is loaded: on an older Node.js, loading it could
@@ -7,6 +8,7 @@ if (isNodeVersionSupported(process.versions.node)) {
   const { run } = await import('./run.ts');
   process.exitCode = await run(process.argv.slice(2), {
     cwd: process.cwd(),
+    homeDir: homedir(),
     userAgent: process.env.npm_config_user_agent,
     layerSetModule: process.env.NEST_KIT_LAYER_SET_MODULE,
   });

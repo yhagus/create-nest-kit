@@ -94,6 +94,36 @@ describe('create-nest-kit CLI', () => {
     await expect(access(path.join(workDir, 'my-api/package.json'))).rejects.toThrow('ENOENT');
   });
 
+  it('fails with --yes when the folder name is not a valid package name, suggesting --name', async () => {
+    const folder = path.join(workDir, 'My Apps');
+    await mkdir(folder);
+
+    const result = await runCli(folder, ['.', '--yes', '--dry-run']);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('Pass --name my-apps');
+  });
+
+  it('names the package with --name instead of the folder name', async () => {
+    const folder = path.join(workDir, 'My Apps');
+    await mkdir(folder);
+
+    const result = await runCli(folder, [
+      '.',
+      '--yes',
+      '--name',
+      'my-apps',
+      '--no-install',
+      '--no-git',
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const packageJson: unknown = JSON.parse(
+      await readFile(path.join(folder, 'package.json'), 'utf8'),
+    );
+    expect(packageJson).toMatchObject({ name: 'my-apps' });
+  });
+
   it('refuses a combination with a planned layer, naming the layer', async () => {
     const result = await runCli(workDir, [
       'my-api',

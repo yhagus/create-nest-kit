@@ -1,16 +1,8 @@
-import path from 'node:path';
 import { UsageError } from './args.ts';
 import { DATABASE_LABELS, ORM_LABELS } from './labels.ts';
 import { isComboReady } from './layers/resolve.ts';
 import type { LayerManifest } from './layers/types.ts';
-import {
-  listCombos,
-  ORMS_BY_DATABASE,
-  packageNameProblem,
-  type Combo,
-  type Database,
-  type Orm,
-} from './options.ts';
+import { listCombos, ORMS_BY_DATABASE, type Combo, type Database, type Orm } from './options.ts';
 
 // The wizard's decisions, kept apart from the clack prompts so they can be unit-tested.
 
@@ -93,16 +85,4 @@ export function ormStep(database: Database, isAvailable: (orm: Orm) => boolean):
     };
   }
   return { kind: 'select', ...selectStep(orms, ORM_LABELS, isAvailable) };
-}
-
-/** The package name a directory implies: its last path segment. */
-export function projectNameFor(cwd: string, directory: string): string {
-  return path.basename(path.resolve(cwd, directory));
-}
-
-/** Why `directory` can't hold the project, or undefined when it can. */
-export function directoryProblem(cwd: string, directory: string): string | undefined {
-  const name = projectNameFor(cwd, directory);
-  const problem = packageNameProblem(name);
-  return problem ? `"${name}" can't be a package name: ${problem}` : undefined;
 }

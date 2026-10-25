@@ -60,10 +60,10 @@ export function describeOptions(options: ProjectOptions): [string, string][] {
   ];
 }
 
-/** `describeOptions` plus what happens after writing, for the confirmation summary. */
-export function describeRun(options: ProjectOptions): [string, string][] {
+/** `describeOptions` plus where and what gets written, for the confirmation summary. */
+export function describeRun(options: ProjectOptions, location: string): [string, string][] {
   return [
-    ['Directory', options.directory],
+    ['Location', location],
     ['Package name', options.name],
     ...describeOptions(options),
     ['Install dependencies', yesNoLabel(options.install)],

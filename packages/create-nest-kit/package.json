@@ -1,6 +1,6 @@
 {
   "name": "create-nest-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Wizard installer for a NestJS 12 API: pick the HTTP platform, database, ORM and auth style; get the same modules and HTTP contract.",
   "keywords": [

@@ -20,12 +20,19 @@ import {
   wizardPackageManagerStep,
 } from './package-manager-choice.ts';
 import { PACKAGE_JSON_PATH } from './paths.ts';
-import { DEFAULT_DIRECTORY, runWizard } from './wizard.ts';
-import { projectNameFor } from './wizard-choices.ts';
+import {
+  DEFAULT_DIRECTORY,
+  nonInteractivePackageName,
+  shellQuote,
+  shortenHomePath,
+} from './project-target.ts';
+import { runWizard } from './wizard.ts';
 
 /** Everything the CLI reads from its process, gathered once in cli.ts. */
 export interface RunEnvironment {
   cwd: string;
+  /** Written as `~` in the paths we show. */
+  homeDir: string;
   /** `npm_config_user_agent`, set by the package manager that launched us. */
   userAgent: string | undefined;
   /** `NEST_KIT_LAYER_SET_MODULE`: replaces the built-in layers (installer tests only). */
@@ -77,17 +84,18 @@ async function runCommand(argv: readonly string[], environment: RunEnvironment):
   }
 
   const targetDir = path.resolve(environment.cwd, options.directory);
-  if (!(await confirmTargetDirectory(targetDir, args))) return cancelled();
-  if (isInteractive && !(await confirmSummary(options))) return cancelled();
+  const location = shortenHomePath(targetDir, environment.homeDir);
+  if (!(await confirmTargetDirectory(targetDir, location, args))) return cancelled();
+  if (isInteractive && !(await confirmSummary(options, location))) return cancelled();
 
   await writeProject(plan, targetDir);
-  p.log.success(`Created ${options.name} in ${targetDir}`);
+  p.log.success(`Created ${options.name} in ${location}`);
 
   if (options.install) await installDependencies(targetDir, options.packageManager);
   if (options.git) await reportGit(targetDir);
 
   const nextSteps = [
-    ...(options.directory === '.' ? [] : [`cd ${options.directory}`]),
+    ...(targetDir === environment.cwd ? [] : [`cd ${shellQuote(options.directory)}`]),
     ...(options.install ? [] : [installCommand(options.packageManager)]),
     ...quickstartCommands(options, plan.manifest),
     `Mailpit (dev mail): ${MAILPIT_URL}`,
@@ -113,14 +121,16 @@ async function collectOptions(
     return parseProjectOptions({
       ...args.choices,
       directory,
-      name: projectNameFor(environment.cwd, directory),
+      name: nonInteractivePackageName(environment.cwd, directory, args.packageName),
       packageManager,
       packageManagerVersion: version,
     });
   }
   return runWizard({
     cwd: environment.cwd,
+    homeDir: environment.homeDir,
     directory: args.directory,
+    packageName: args.packageName,
     preset: args.choices,
     packageManager: await wizardPackageManagerStep(packageManagerFlag, environment.userAgent),
     layers: layerSet.layers,
@@ -128,22 +138,26 @@ async function collectOptions(
 }
 
 /** True when the directory is missing or empty, or the user (or --force) allows writing into it. */
-async function confirmTargetDirectory(targetDir: string, args: CliArgs): Promise<boolean> {
+async function confirmTargetDirectory(
+  targetDir: string,
+  location: string,
+  args: CliArgs,
+): Promise<boolean> {
   if ((await listDirectory(targetDir)).length === 0 || args.allowNonEmptyDirectory) return true;
   if (args.acceptDefaults) {
     throw new UsageError(
-      `${targetDir} is not empty. Pass --force to write into it anyway (files with the same name are replaced; nothing is deleted).`,
+      `${location} is not empty. Pass --force to write into it anyway (files with the same name are replaced; nothing is deleted).`,
     );
   }
   const answer = await p.confirm({
-    message: `${targetDir} is not empty. Write into it anyway? Files with the same name are replaced; nothing is deleted.`,
+    message: `${location} is not empty. Write into it anyway? Files with the same name are replaced; nothing is deleted.`,
     initialValue: false,
   });
   return answer === true;
 }
 
-async function confirmSummary(options: ProjectOptions): Promise<boolean> {
-  const rows = describeRun(options);
+async function confirmSummary(options: ProjectOptions, location: string): Promise<boolean> {
+  const rows = describeRun(options, location);
   const labelWidth = Math.max(...rows.map(([label]) => label.length));
   p.note(
     rows.map(([label, value]) => `${label.padEnd(labelWidth)}  ${value}`).join('\n'),

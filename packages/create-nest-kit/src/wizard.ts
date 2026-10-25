@@ -11,6 +11,7 @@ import type { LayerManifest } from './layers/types.ts';
 import {
   AUTH_STYLES,
   DATABASES,
+  packageNameProblem,
   parseProjectOptions,
   PLATFORMS,
   VALIDATION_LIBRARIES,
@@ -24,19 +25,16 @@ import {
   type Validation,
 } from './options.ts';
 import type { PackageManagerStep } from './package-manager-choice.ts';
-import {
-  comboAvailability,
-  directoryProblem,
-  ormStep,
-  projectNameFor,
-  selectStep,
-} from './wizard-choices.ts';
-
-export const DEFAULT_DIRECTORY = 'nest-api';
+import { DEFAULT_DIRECTORY, packageNameStep, shortenHomePath } from './project-target.ts';
+import { comboAvailability, ormStep, selectStep } from './wizard-choices.ts';
 
 export interface WizardInput {
   cwd: string;
+  /** Written as `~` when showing where the project goes. */
+  homeDir: string;
   directory: string | undefined;
+  /** From --name; otherwise the target folder's name, or asked for when that isn't a valid one. */
+  packageName: string | undefined;
   /** Choices given as flags; their prompts are skipped. */
   preset: Partial<ProjectChoices>;
   /** Settled from --pm or the launching package manager, or asked for among the installed ones. */
@@ -47,6 +45,7 @@ export interface WizardInput {
 /** One prompt per answer; a prompt resolves to a symbol when cancelled, which `p.group` strips from its result. */
 interface WizardPrompts {
   directory: string | symbol;
+  name: string | symbol;
   platform: Platform | symbol;
   database: Database | symbol;
   orm: Orm | symbol;
@@ -73,15 +72,27 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
   try {
     const answers = await p.group<WizardPrompts>(
       {
-        directory: () =>
-          input.directory === undefined
-            ? p.text({
-                message: 'Where should the project go?',
-                placeholder: DEFAULT_DIRECTORY,
-                defaultValue: DEFAULT_DIRECTORY,
-                validate: (value) => directoryProblem(input.cwd, value || DEFAULT_DIRECTORY),
-              })
-            : Promise.resolve(input.directory),
+        directory: () => {
+          if (input.directory !== undefined) return Promise.resolve(input.directory);
+          p.log.info(`You are in ${shortenHomePath(input.cwd, input.homeDir)}`);
+          return p.text({
+            message: 'Project name: a new folder here, or . for this folder',
+            placeholder: DEFAULT_DIRECTORY,
+            defaultValue: DEFAULT_DIRECTORY,
+          });
+        },
+        name: ({ results }) => {
+          const directory = results.directory || DEFAULT_DIRECTORY;
+          const step = packageNameStep(input.cwd, directory, input.packageName);
+          if (step.kind === 'known') return Promise.resolve(step.name);
+          p.log.warn(`"${step.folderName}" can't be a package name: ${step.problem}.`);
+          return p.text({
+            message: 'Package name',
+            placeholder: step.suggestion,
+            defaultValue: step.suggestion,
+            validate: (value) => invalidPackageNameMessage(value || step.suggestion),
+          });
+        },
         platform: () =>
           preset.platform !== undefined
             ? Promise.resolve(preset.platform)
@@ -189,17 +200,20 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
       },
     );
 
-    const directory = answers.directory || DEFAULT_DIRECTORY;
     return parseProjectOptions({
       ...answers,
-      directory,
-      name: projectNameFor(input.cwd, directory),
+      directory: answers.directory || DEFAULT_DIRECTORY,
       packageManagerVersion: packageManagerVersion(packageManagerStep, answers.packageManager),
     });
   } catch (error) {
     if (error instanceof WizardCancelled) return undefined;
     throw error;
   }
+}
+
+function invalidPackageNameMessage(name: string): string | undefined {
+  const problem = packageNameProblem(name);
+  return problem && `Not a valid npm package name: ${problem}`;
 }
 
 /** The version to pin for the chosen manager: from the user agent, or from probing PATH. */

@@ -4,6 +4,7 @@ import {
   compatibilityProblem,
   DATABASES,
   ORMS,
+  packageNameProblem,
   PACKAGE_MANAGERS,
   PLATFORMS,
   VALIDATION_LIBRARIES,
@@ -13,6 +14,8 @@ import {
 /** What the command line asked for. Choices left out are prompted for, or defaulted with --yes. */
 export interface CliArgs {
   directory: string | undefined;
+  /** --name: the npm package name, instead of the target folder's name. */
+  packageName: string | undefined;
   choices: Partial<ProjectChoices>;
   /** --yes: take defaults for everything not given as a flag, and don't prompt. */
   acceptDefaults: boolean;
@@ -29,6 +32,7 @@ export class UsageError extends Error {
 }
 
 const FLAGS = {
+  name: { type: 'string' },
   platform: { type: 'string' },
   db: { type: 'string' },
   orm: { type: 'string' },
@@ -72,6 +76,7 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
 
   return {
     directory: positionals[0],
+    packageName: parsePackageName(values.name),
     choices,
     acceptDefaults: values.yes ?? false,
     allowNonEmptyDirectory: values.force ?? false,
@@ -95,6 +100,14 @@ function parseFlags(argv: readonly string[]) {
     if (error instanceof TypeError) throw new UsageError(error.message, { cause: error });
     throw error;
   }
+}
+
+function parsePackageName(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const problem = packageNameProblem(value);
+  if (problem)
+    throw new UsageError(`--name "${value}" is not a valid npm package name: ${problem}`);
+  return value;
 }
 
 function parseChoice<T extends string>(
