@@ -218,7 +218,22 @@ node scripts/matrix.ts --list --subset pr  # print the selected ids as JSON
 ```
 
 CI runs the PR subset on every push and pull request, one job per combo; the nightly workflow runs
-all 240 and uploads the logs of failed combos as artifacts.
+all 240, in one matrix per pattern (GitHub runs at most 256 jobs per matrix), and uploads the logs
+of failed combos as artifacts.
+
+### Smoke tests
+
+The matrix runs every step on the host. `scripts/smoke.ts` boots a generated project in Docker
+instead, then checks `/health` and signs in as the admin `db:seed` creates:
+
+```sh
+pnpm build
+node scripts/smoke.ts image --orm prisma --pm npm   # the production image, against compose's services
+node scripts/smoke.ts dev --type fullstack          # --dev-env docker's containers, web/ included
+```
+
+`SMOKE_PORT` changes the API's port (default 3000) and `SMOKE_DIR` where the project goes. CI runs six
+scenarios on every push; together the image ones cover every ORM and package manager.
 
 ### The installer
 

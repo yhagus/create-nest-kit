@@ -40,3 +40,52 @@ jobs:
     uses: ./.github/workflows/matrix.yml
     with:
       subset: pr
+
+  # What the matrix can't cover, since it runs every step on the host: the production image and
+  # `--dev-env docker`, booted in Docker and signed in to. Together the image scenarios cover every
+  # ORM and package manager.
+  smoke:
+    name: Smoke (${{ matrix.name }})
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: image, prisma, npm
+            args: image --orm prisma --pm npm
+          - name: image, drizzle, pnpm, cqrs
+            args: image --orm drizzle --pm pnpm --pattern cqrs --auth nest
+          - name: image, typeorm, yarn
+            args: image --orm typeorm --pm yarn --platform node
+            corepack: true
+          - name: image, mikroorm, bun
+            args: image --orm mikroorm --pm bun --platform express --validation arktype
+            bun: true
+          - name: image, mongoose, pnpm, cqrs
+            args: image --db mongodb --pm pnpm --pattern cqrs
+          - name: dev, API + web, cqrs
+            args: dev --type fullstack --pm pnpm --pattern cqrs --auth nest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      # The image scenarios install on the host with the project's package manager; corepack
+      # provides the yarn the project pins.
+      - if: matrix.corepack
+        run: corepack enable
+      - if: matrix.bun
+        uses: oven-sh/setup-bun@v2
+      - run: pnpm build
+      - run: node scripts/smoke.ts $ARGS
+        env:
+          ARGS: ${{ matrix.args }}
+          SMOKE_DIR: ${{ runner.temp }}/smoke
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: smoke-logs-${{ strategy.job-index }}
+          path: ${{ runner.temp }}/smoke/*.log
+          retention-days: 14
