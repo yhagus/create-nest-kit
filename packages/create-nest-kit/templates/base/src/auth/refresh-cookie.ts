@@ -2,7 +2,7 @@ import { type CookieSerializeOptions, Injectable } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { DEFAULT_API_VERSION, GLOBAL_PREFIX } from '../bootstrap/configure-app.js';
 import { AppConfig } from '../config/app-config.js';
-import type { IssuedTokens } from './auth.service.js';
+import type { IssuedTokens } from './auth.types.js';
 
 export const REFRESH_COOKIE = 'refresh_token';
 

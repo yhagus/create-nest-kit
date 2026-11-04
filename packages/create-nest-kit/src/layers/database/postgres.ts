@@ -8,7 +8,13 @@ export const postgresLayer: LayerManifest = {
   devDependencies: {
     '@testcontainers/postgresql': TESTCONTAINERS_VERSION,
   },
-  env: [{ key: 'DATABASE_URL', value: 'postgres://app:app@localhost:5432/app' }],
+  env: [
+    {
+      key: 'DATABASE_URL',
+      value: 'postgres://app:app@localhost:5432/app',
+      containerValue: 'postgres://app:app@postgres:5432/app',
+    },
+  ],
   compose: {
     services: {
       postgres: {

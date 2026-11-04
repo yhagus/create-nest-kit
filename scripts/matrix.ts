@@ -112,17 +112,17 @@ async function runCombo(combo: Combo, steps: MatrixStep[], keep: boolean): Promi
 }
 
 function comboFlags(combo: Combo): string[] {
+  // A `Record` over the combo's choices, so a new choice without its flag fails typecheck.
+  const choiceFlags: Record<keyof Omit<Combo, 'id'>, [string, string]> = {
+    platform: ['--platform', combo.platform],
+    database: ['--db', combo.database],
+    orm: ['--orm', combo.orm],
+    auth: ['--auth', combo.auth],
+    validation: ['--validation', combo.validation],
+    pattern: ['--pattern', combo.pattern],
+  };
   return [
-    '--platform',
-    combo.platform,
-    '--db',
-    combo.database,
-    '--orm',
-    combo.orm,
-    '--auth',
-    combo.auth,
-    '--validation',
-    combo.validation,
+    ...Object.values(choiceFlags).flat(),
     '--pm',
     'pnpm',
     '--no-git',

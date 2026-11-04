@@ -49,6 +49,7 @@ describe('selectStep', () => {
       options: [
         { value: 'fastify', label: 'Fastify (coming soon)', disabled: true },
         { value: 'express', label: 'Express' },
+        { value: 'node', label: 'Node (native node:http)' },
       ],
       initialValue: 'express',
     });

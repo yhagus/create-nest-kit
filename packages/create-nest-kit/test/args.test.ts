@@ -5,6 +5,8 @@ describe('parseCliArgs', () => {
   it('maps every choice flag to its option', () => {
     const args = parseCliArgs([
       'my-api',
+      '--type',
+      'fullstack',
       '--platform',
       'express',
       '--db',
@@ -15,24 +17,31 @@ describe('parseCliArgs', () => {
       'nest',
       '--validation',
       'valibot',
+      '--pattern',
+      'cqrs',
       '--no-email-verification',
       '--csrf',
       '--pm',
       'pnpm',
+      '--dev-env',
+      'docker',
       '--no-install',
       '--no-git',
     ]);
 
     expect(args.directory).toBe('my-api');
     expect(args.choices).toEqual({
+      projectType: 'fullstack',
       platform: 'express',
       database: 'postgres',
       orm: 'prisma',
       auth: 'nest',
       validation: 'valibot',
+      pattern: 'cqrs',
       emailVerification: false,
       csrf: true,
       packageManager: 'pnpm',
+      devEnvironment: 'docker',
       install: false,
       git: false,
     });
@@ -40,14 +49,17 @@ describe('parseCliArgs', () => {
 
   it('leaves choices that were not given undefined, so they are prompted for', () => {
     expect(parseCliArgs([]).choices).toEqual({
+      projectType: undefined,
       platform: undefined,
       database: undefined,
       orm: undefined,
       auth: undefined,
       validation: undefined,
+      pattern: undefined,
       emailVerification: undefined,
       csrf: undefined,
       packageManager: undefined,
+      devEnvironment: undefined,
       install: undefined,
       git: undefined,
     });

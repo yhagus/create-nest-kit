@@ -103,16 +103,19 @@ Generated with [create-nest-kit](https://www.npmjs.com/package/create-nest-kit).
 
 ## Options
 
-| Option             | Value                              |
-| ------------------ | ---------------------------------- |
-| HTTP platform      | Fastify                            |
-| Database           | PostgreSQL                         |
-| ORM / ODM          | Drizzle                            |
-| Auth style         | Hand-rolled @nestjs/jwt + argon2id |
-| Validation library | Zod                                |
-| Email verification | on                                 |
-| CSRF protection    | on                                 |
-| Package manager    | pnpm                               |
+| Option              | Value                              |
+| ------------------- | ---------------------------------- |
+| Project type        | API only                           |
+| HTTP platform       | Fastify                            |
+| Database            | PostgreSQL                         |
+| ORM / ODM           | Drizzle                            |
+| Auth style          | Hand-rolled @nestjs/jwt + argon2id |
+| Validation library  | Zod                                |
+| Application pattern | Controller + service               |
+| Email verification  | on                                 |
+| CSRF protection     | on                                 |
+| Package manager     | pnpm                               |
+| Dev environment     | Local Node.js                      |
 
 ## Quickstart
 

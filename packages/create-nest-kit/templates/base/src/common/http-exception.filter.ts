@@ -39,7 +39,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set(Object.values(ErrorCode))
 
 /**
  * Turns every exception into `{ statusCode, errorCode, message }`. Replies through the
- * HTTP adapter, so it works on Fastify and Express alike.
+ * HTTP adapter, so it works on every platform.
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

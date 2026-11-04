@@ -7,7 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { IncomingHttpHeaders } from 'node:http';
 import { ErrorCode } from '../common/error-code.js';
-import { SessionsService } from '../modules/sessions/sessions.service.js';
+import { SessionDenyList } from '../modules/sessions/session-deny-list.js';
 import { UsersRepository } from '../modules/users/users.repository.js';
 import { AccessTokens } from './access-tokens.js';
 import { accessRuleOf } from './access-rule.js';
@@ -27,7 +27,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly accessTokens: AccessTokens,
-    private readonly sessions: SessionsService,
+    private readonly denyList: SessionDenyList,
     private readonly users: UsersRepository,
   ) {}
 
@@ -41,7 +41,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = bearerTokenOf(request.headers.authorization);
     const claims = token === null ? null : await this.accessTokens.verify(token);
     // The deny-list makes a revoked session's unexpired access tokens stop working at once.
-    if (claims === null || (await this.sessions.isRevoked(claims.sid))) throw unauthenticated();
+    if (claims === null || (await this.denyList.includes(claims.sid))) throw unauthenticated();
 
     const user = await this.users.findById(claims.sub);
     if (!user) throw unauthenticated();

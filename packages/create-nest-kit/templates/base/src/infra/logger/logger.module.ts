@@ -19,7 +19,7 @@ const REDACTED_PATHS = [
       useFactory: (config: AppConfig) => ({
         pinoHttp: {
           level: config.get('LOG_LEVEL'),
-          // Used on Express. Fastify assigns the id before middleware runs, so the
+          // Used on Express and Node. Fastify assigns the id before middleware runs, so the
           // Fastify adapter gets the same function in create-app.ts.
           genReqId,
           redact: { paths: REDACTED_PATHS, censor: '[redacted]' },

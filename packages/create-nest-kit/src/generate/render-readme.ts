@@ -2,7 +2,15 @@ import type { MergedManifest } from '../layers/merge.ts';
 import { describeOptions } from '../labels.ts';
 import type { ProjectOptions } from '../options.ts';
 import { installCommand, runScriptCommand } from '../package-manager.ts';
-import { MAILPIT_URL, quickstartCommands } from './quickstart.ts';
+import {
+  DEV_CONTAINER_SERVICE,
+  MAILPIT_URL,
+  quickstartCommands,
+  quickstartScripts,
+  WEB_CONTAINER_SERVICE,
+  WEB_DEV_URL,
+  webQuickstartCommands,
+} from './quickstart.ts';
 import { sortKeys } from './sort-keys.ts';
 
 export function renderReadme(options: ProjectOptions, manifest: MergedManifest): string {
@@ -33,8 +41,41 @@ function renderQuickstart(options: ProjectOptions, manifest: MergedManifest): st
     ...commands,
     '```',
     '',
+    ...(options.devEnvironment === 'docker' ? [devContainerNotes(options, manifest), ''] : []),
+    ...webQuickstart(options),
     `Mail sent in development is caught by Mailpit: ${MAILPIT_URL}`,
   ].join('\n');
+}
+
+/** How to start the front end of an API + web project, as lines of the quickstart. */
+function webQuickstart(options: ProjectOptions): string[] {
+  if (options.projectType !== 'fullstack') return [];
+  if (options.devEnvironment === 'docker') {
+    return [
+      `The front end runs in the \`${WEB_CONTAINER_SERVICE}\` container, at ${WEB_DEV_URL}, and reloads on every change in \`web/\`.`,
+      '',
+    ];
+  }
+  return [
+    `The front end, in a second terminal (${WEB_DEV_URL}):`,
+    '',
+    '```sh',
+    ...webQuickstartCommands(options, false),
+    '```',
+    '',
+  ];
+}
+
+function devContainerNotes(options: ProjectOptions, manifest: MergedManifest): string {
+  const service = DEV_CONTAINER_SERVICE;
+  const scripts = quickstartScripts(manifest).map(code).join(', ');
+  return `
+The API runs in the \`${service}\` container. On every start it installs dependencies into its own \`node-modules\` volume and runs ${scripts}; \`start:dev\` then restarts the API on every change to the sources.
+
+- Inside the container, the services are reached by name: \`docker-compose.yml\` overrides the URLs that \`.env\` points at \`localhost\`, which is still what tools on your machine use.
+- Run other scripts there: \`docker compose exec ${service} npm run <script>\`. After changing dependencies, \`docker compose restart ${service}\`.
+- The install on your machine is for your editor and the tests: run \`${runScriptCommand(options.packageManager, 'test')}\` and \`${runScriptCommand(options.packageManager, 'test:e2e')}\` there, since the e2e tests start their own containers.
+`.trim();
 }
 
 function renderScriptsTable(options: ProjectOptions, manifest: MergedManifest): string {

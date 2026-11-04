@@ -1,7 +1,7 @@
 import { Controller, Get, Module } from '@nestjs/common';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Permission } from '../../src/modules/permissions/permission.js';
-import { RolesService } from '../../src/modules/roles/roles.service.js';
+import { RolesRepository } from '../../src/modules/roles/roles.repository.js';
 import { createTestApp, type TestApp } from '../support/app.js';
 import { createSignedInUser, seedAdmin, seedSystemRoles } from '../support/auth.js';
 import { request } from '../support/http.js';
@@ -22,7 +22,9 @@ describe('permissions', () => {
   let testApp: TestApp;
 
   async function createRole(name: string, permissions: Permission[]) {
-    return testApp.app.get(RolesService).createRole({ name, permissions });
+    return testApp.app
+      .get(RolesRepository)
+      .create({ name, description: '', permissions, isSystem: false });
   }
 
   beforeAll(async () => {
@@ -103,7 +105,7 @@ describe('permissions', () => {
     expect(beforeChange.status).toBe(403);
     expect(await beforeChange.json()).toMatchObject({ errorCode: 'AUTH_FORBIDDEN' });
 
-    await testApp.app.get(RolesService).updateRole(auditor.id, {
+    await testApp.app.get(RolesRepository).update(auditor.id, {
       permissions: [Permission.RolesRead],
     });
 

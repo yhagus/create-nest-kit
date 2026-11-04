@@ -1,19 +1,22 @@
 import type { Redis } from 'ioredis';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { REDIS_CLIENT } from '../../src/infra/redis/redis.module.js';
-import { SessionsService } from '../../src/modules/sessions/sessions.service.js';
-import { UsersService } from '../../src/modules/users/users.service.js';
 import { createTestApp, type TestApp } from '../support/app.js';
+import {
+  createSignedInUser,
+  currentSessionId,
+  expectAccessTokenRefused,
+  seedSystemRoles,
+} from '../support/auth.js';
+import { request } from '../support/http.js';
 
 const ACCESS_TOKEN_TTL_MS = 15 * 60_000;
 
 describe('session revocation', () => {
   let testApp: TestApp;
-  let sessionsService: SessionsService;
 
   beforeAll(async () => {
     testApp = await createTestApp({ ACCESS_TOKEN_TTL: '15m' });
-    sessionsService = testApp.app.get(SessionsService);
   });
 
   afterAll(async () => {
@@ -22,22 +25,21 @@ describe('session revocation', () => {
 
   beforeEach(async () => {
     await testApp.reset();
+    await seedSystemRoles(testApp);
   });
 
   it('deny-lists a revoked session in Redis for the access token lifetime', async () => {
-    const user = await testApp.app
-      .get(UsersService)
-      .createUser({ email: 'ada@example.com', password: 'correct horse', name: 'Ada' });
-    const session = await sessionsService.create({ userId: user.id, userAgent: null, ip: null });
-    expect(await sessionsService.isRevoked(session.id)).toBe(false);
+    const { accessToken } = await createSignedInUser(testApp);
+    const sessionId = await currentSessionId(testApp, accessToken);
 
-    await sessionsService.revoke(session.id);
+    const response = await request(testApp, 'POST /auth/logout', { accessToken });
 
+    expect(response.status).toBe(204);
     const ttlMs = await testApp.app
       .get<Redis>(REDIS_CLIENT)
-      .pttl(`auth:revoked-session:${session.id}`);
+      .pttl(`auth:revoked-session:${sessionId}`);
     expect(ttlMs).toBeGreaterThan(ACCESS_TOKEN_TTL_MS - 60_000);
     expect(ttlMs).toBeLessThanOrEqual(ACCESS_TOKEN_TTL_MS);
-    expect(await sessionsService.isRevoked(session.id)).toBe(true);
+    await expectAccessTokenRefused(testApp, accessToken);
   });
 });

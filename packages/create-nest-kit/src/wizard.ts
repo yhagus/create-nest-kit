@@ -3,7 +3,13 @@ import { UsageError } from './args.ts';
 import {
   AUTH_LABELS,
   DATABASE_LABELS,
+  DEV_ENVIRONMENT_HINTS,
+  DEV_ENVIRONMENT_LABELS,
+  PATTERN_HINTS,
+  PATTERN_LABELS,
   PLATFORM_LABELS,
+  PROJECT_TYPE_HINTS,
+  PROJECT_TYPE_LABELS,
   VALIDATION_HINTS,
   VALIDATION_LABELS,
 } from './labels.ts';
@@ -11,17 +17,23 @@ import type { LayerManifest } from './layers/types.ts';
 import {
   AUTH_STYLES,
   DATABASES,
+  DEV_ENVIRONMENTS,
   packageNameProblem,
   parseProjectOptions,
+  PATTERNS,
   PLATFORMS,
+  PROJECT_TYPES,
   VALIDATION_LIBRARIES,
   type AuthStyle,
   type Database,
+  type DevEnvironment,
   type Orm,
   type PackageManager,
+  type Pattern,
   type Platform,
   type ProjectChoices,
   type ProjectOptions,
+  type ProjectType,
   type Validation,
 } from './options.ts';
 import type { PackageManagerStep } from './package-manager-choice.ts';
@@ -46,14 +58,17 @@ export interface WizardInput {
 interface WizardPrompts {
   directory: string | symbol;
   name: string | symbol;
+  projectType: ProjectType | symbol;
   platform: Platform | symbol;
   database: Database | symbol;
   orm: Orm | symbol;
   auth: AuthStyle | symbol;
   validation: Validation | symbol;
+  pattern: Pattern | symbol;
   emailVerification: boolean | symbol;
   csrf: boolean | symbol;
   packageManager: PackageManager | symbol;
+  devEnvironment: DevEnvironment | symbol;
   install: boolean | symbol;
   git: boolean | symbol;
 }
@@ -93,6 +108,13 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
             validate: (value) => invalidPackageNameMessage(value || step.suggestion),
           });
         },
+        projectType: () =>
+          preset.projectType !== undefined
+            ? Promise.resolve(preset.projectType)
+            : p.select({
+                message: 'Project type',
+                ...selectStep(PROJECT_TYPES, PROJECT_TYPE_LABELS, () => true, PROJECT_TYPE_HINTS),
+              }),
         platform: () =>
           preset.platform !== undefined
             ? Promise.resolve(preset.platform)
@@ -158,6 +180,26 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
                   VALIDATION_HINTS,
                 ),
               }),
+        pattern: ({ results }) =>
+          preset.pattern !== undefined
+            ? Promise.resolve(preset.pattern)
+            : p.select({
+                message: 'Application pattern',
+                ...selectStep(
+                  PATTERNS,
+                  PATTERN_LABELS,
+                  (pattern) =>
+                    isAvailable({
+                      platform: results.platform,
+                      database: results.database,
+                      orm: results.orm,
+                      auth: results.auth,
+                      validation: results.validation,
+                      pattern,
+                    }),
+                  PATTERN_HINTS,
+                ),
+              }),
         emailVerification: () =>
           preset.emailVerification !== undefined
             ? Promise.resolve(preset.emailVerification)
@@ -180,6 +222,18 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
                   hint: version,
                 })),
                 initialValue: packageManagerStep.initialValue,
+              }),
+        devEnvironment: () =>
+          preset.devEnvironment !== undefined
+            ? Promise.resolve(preset.devEnvironment)
+            : p.select({
+                message: 'Dev environment',
+                ...selectStep(
+                  DEV_ENVIRONMENTS,
+                  DEV_ENVIRONMENT_LABELS,
+                  () => true,
+                  DEV_ENVIRONMENT_HINTS,
+                ),
               }),
         install: ({ results }) =>
           preset.install !== undefined

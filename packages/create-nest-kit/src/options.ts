@@ -1,19 +1,28 @@
 import { z } from 'zod';
 import { DATABASE_LABELS } from './labels.ts';
 
-export const PLATFORMS = ['fastify', 'express'] as const;
+export const PROJECT_TYPES = ['api', 'fullstack'] as const;
+export const PLATFORMS = ['fastify', 'express', 'node'] as const;
 export const DATABASES = ['postgres', 'mongodb'] as const;
 export const ORMS = ['drizzle', 'prisma', 'typeorm', 'mikroorm', 'mongoose'] as const;
 export const AUTH_STYLES = ['jwt', 'nest'] as const;
 export const VALIDATION_LIBRARIES = ['zod', 'class-validator', 'valibot', 'arktype'] as const;
+export const PATTERNS = ['service', 'cqrs'] as const;
 export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn', 'bun'] as const;
+export const DEV_ENVIRONMENTS = ['local', 'docker'] as const;
 
+/** `fullstack` adds a Nuxt front end in `web/`, a package of its own. */
+export type ProjectType = (typeof PROJECT_TYPES)[number];
 export type Platform = (typeof PLATFORMS)[number];
 export type Database = (typeof DATABASES)[number];
 export type Orm = (typeof ORMS)[number];
 export type AuthStyle = (typeof AUTH_STYLES)[number];
 export type Validation = (typeof VALIDATION_LIBRARIES)[number];
+/** How each module is organised: controllers calling services, or commands and queries on buses. */
+export type Pattern = (typeof PATTERNS)[number];
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
+/** Where the API runs in development: `local` on the host's Node, `docker` in a compose service. */
+export type DevEnvironment = (typeof DEV_ENVIRONMENTS)[number];
 
 export const ORMS_BY_DATABASE = {
   postgres: ['drizzle', 'prisma', 'typeorm', 'mikroorm'],
@@ -22,14 +31,17 @@ export const ORMS_BY_DATABASE = {
 
 /** Everything the user chooses, apart from where the project goes. */
 export interface ProjectChoices {
+  projectType: ProjectType;
   platform: Platform;
   database: Database;
   orm: Orm;
   auth: AuthStyle;
   validation: Validation;
+  pattern: Pattern;
   emailVerification: boolean;
   csrf: boolean;
   packageManager: PackageManager;
+  devEnvironment: DevEnvironment;
   install: boolean;
   git: boolean;
 }
@@ -43,8 +55,11 @@ export interface ProjectOptions extends ProjectChoices {
   packageManagerVersion?: string;
 }
 
-/** The five choices that change generated code. Every other option only changes config values. */
-type ComboChoice = 'platform' | 'database' | 'orm' | 'auth' | 'validation';
+/**
+ * The six choices that change the API's code. Every other option only changes config values, or
+ * (the project type) adds a package the API doesn't depend on.
+ */
+type ComboChoice = 'platform' | 'database' | 'orm' | 'auth' | 'validation' | 'pattern';
 
 export type Combo = Pick<ProjectChoices, ComboChoice> & { id: string };
 
@@ -85,15 +100,18 @@ const packageNameSchema = z.string().superRefine((name, context) => {
 export const projectOptionsSchema = z.object({
   name: packageNameSchema,
   directory: z.string().min(1),
+  projectType: z.enum(PROJECT_TYPES).default('api'),
   platform: z.enum(PLATFORMS).default('fastify'),
   database: z.enum(DATABASES).default('postgres'),
   orm: z.enum(ORMS).optional(),
   auth: z.enum(AUTH_STYLES).default('jwt'),
   validation: z.enum(VALIDATION_LIBRARIES).default('zod'),
+  pattern: z.enum(PATTERNS).default('service'),
   emailVerification: z.boolean().default(true),
   csrf: z.boolean().default(true),
   packageManager: z.enum(PACKAGE_MANAGERS).default('npm'),
   packageManagerVersion: z.string().optional(),
+  devEnvironment: z.enum(DEV_ENVIRONMENTS).default('local'),
   install: z.boolean().default(true),
   git: z.boolean().default(true),
 });
@@ -138,10 +156,10 @@ export function parseProjectOptions(input: ProjectOptionsInput): ProjectOptions 
 }
 
 export function comboId(combo: Omit<Combo, 'id'>): string {
-  return `${combo.platform}-${combo.database}-${combo.orm}-${combo.auth}-${combo.validation}`;
+  return `${combo.platform}-${combo.database}-${combo.orm}-${combo.auth}-${combo.validation}-${combo.pattern}`;
 }
 
-/** All valid platform × persistence × auth × validation combinations (80). */
+/** All valid platform × persistence × auth × validation × pattern combinations (240). */
 export function listCombos(): Combo[] {
   const combos: Combo[] = [];
   for (const platform of PLATFORMS) {
@@ -149,8 +167,10 @@ export function listCombos(): Combo[] {
       for (const orm of ORMS_BY_DATABASE[database]) {
         for (const auth of AUTH_STYLES) {
           for (const validation of VALIDATION_LIBRARIES) {
-            const combo = { platform, database, orm, auth, validation };
-            combos.push({ ...combo, id: comboId(combo) });
+            for (const pattern of PATTERNS) {
+              const combo = { platform, database, orm, auth, validation, pattern };
+              combos.push({ ...combo, id: comboId(combo) });
+            }
           }
         }
       }
@@ -166,17 +186,24 @@ const PLATFORM_AUTH_PAIRS = AUTH_STYLES.flatMap((auth) =>
 
 /**
  * The 20 combos CI runs on pull requests: a pairwise covering array, so every pair of values
- * from any two of platform, ORM, auth and validation runs at least once.
+ * from any two of platform, ORM, auth, validation and pattern runs at least once.
  *
  * Each (orm, validation) pair runs once, and 20 is the minimum for that. The (platform, auth)
- * pair rotates by `ormIndex + validationIndex`, so along either axis the four pairs come round in
- * turn: each ORM runs all four of them, and so does each validation library over its five ORMs.
+ * pair rotates by `ormIndex + validationIndex` through the six pairs, listed auth by auth, so any
+ * three pairs in a row cover every platform and any four cover both auth styles. Each ORM runs
+ * four pairs in a row, and each validation library five, over its five ORMs. The pattern follows
+ * the rotation's parity, so any two in a row cover both, and since 2 and 3 are coprime, the six
+ * rotations from 0 pair each pattern with each platform.
  */
 export function prSubset(): Combo[] {
   return listCombos().filter((combo) => {
     const rotation = ORMS.indexOf(combo.orm) + VALIDATION_LIBRARIES.indexOf(combo.validation);
     const pair = PLATFORM_AUTH_PAIRS[rotation % PLATFORM_AUTH_PAIRS.length];
-    return combo.platform === pair?.platform && combo.auth === pair.auth;
+    return (
+      combo.platform === pair?.platform &&
+      combo.auth === pair.auth &&
+      combo.pattern === PATTERNS[rotation % PATTERNS.length]
+    );
   });
 }
 
@@ -190,5 +217,6 @@ export function optionsForCombo(combo: Combo): ProjectOptions {
     orm: combo.orm,
     auth: combo.auth,
     validation: combo.validation,
+    pattern: combo.pattern,
   });
 }

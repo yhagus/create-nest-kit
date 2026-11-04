@@ -14,12 +14,16 @@ const execFileAsync = promisify(execFile);
 
 export const INITIAL_COMMIT_MESSAGE = 'chore: scaffold with create-nest-kit';
 
-/** Runs `<packageManager> install` in `directory`, streaming its output into a clack task log. */
+/**
+ * Runs `<packageManager> install` in `directory`, streaming its output into a clack task log.
+ * `subject` names what is installed in the log's messages.
+ */
 export async function installDependencies(
   directory: string,
   packageManager: PackageManager,
+  subject = 'Dependencies',
 ): Promise<void> {
-  const log = p.taskLog({ title: `Installing dependencies with ${packageManager}` });
+  const log = p.taskLog({ title: `Installing ${subject.toLowerCase()} with ${packageManager}` });
   const spawnOptions: SpawnOptionsWithStdioTuple<StdioNull, StdioPipe, StdioPipe> = {
     cwd: directory,
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -46,7 +50,24 @@ export async function installDependencies(
     log.error(`${packageManager} install failed`, { showLog: true });
     throw new Error(`"${packageManager} install" exited with code ${exitCode}`);
   }
-  log.success('Dependencies installed');
+  log.success(`${subject} installed`);
+}
+
+/**
+ * `bun install` in the front end's folder. It is optional for the API, so a failure (e.g. bun
+ * isn't installed) is only a warning, and the next steps keep `bun install`. Returns whether it ran.
+ */
+export async function installWebDependencies(webDirectory: string): Promise<boolean> {
+  try {
+    await installDependencies(webDirectory, 'bun', 'Front end dependencies');
+    return true;
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    p.log.warn(
+      `The front end's dependencies were not installed: ${reason}. Run bun install in web/ once that's fixed (bun itself: https://bun.sh).`,
+    );
+    return false;
+  }
 }
 
 export type GitResult =

@@ -20,7 +20,7 @@ export function renderAggregateFiles(
     { target: 'package.json', content: renderPackageJson(options, manifest) },
     { target: '.env.example', content: renderEnvExample(manifest) },
     { target: '.env', content: renderEnv(manifest) },
-    { target: 'docker-compose.yml', content: renderDockerCompose(manifest) },
+    { target: 'docker-compose.yml', content: renderDockerCompose(options, manifest) },
     { target: 'README.md', content: renderReadme(options, manifest) },
     { target: '.github/workflows/ci.yml', content: renderCiWorkflow(options) },
   ];

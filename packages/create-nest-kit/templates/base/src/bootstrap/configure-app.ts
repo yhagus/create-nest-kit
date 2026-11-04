@@ -11,15 +11,15 @@ const DOCS_PATH = 'docs';
 const CORS_METHODS = ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'];
 
 /**
- * The HTTP pipeline, shared by both platforms and by the e2e harness.
+ * The HTTP pipeline, shared by every platform and by the e2e harness.
  * The order matters where noted.
  */
 export function configureApp(app: INestApplication): void {
   const config = app.get(AppConfig);
   const corsOrigins = config.get('CORS_ORIGINS');
 
-  // 1. CORS before the security hook: on Express, middleware registered earlier runs first,
-  //    so a CSRF rejection still carries CORS headers. (On Fastify the hook always runs first.)
+  // 1. CORS before the security hook: on Express and Node, middleware registered earlier runs
+  //    first, so a CSRF rejection still carries CORS headers. (On Fastify the hook always runs first.)
   app.enableCors({ origin: corsOrigins, credentials: true, methods: CORS_METHODS });
 
   // 2. Security headers, then the CSRF check. Both run before routing, so they cover 404s too.

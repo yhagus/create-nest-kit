@@ -1,8 +1,21 @@
+import type { Pattern } from '../options.ts';
 import type { LayerManifest } from './types.ts';
 
 /** Versions shared by more than one layer. Nest packages move in lockstep. */
-export const NEST_VERSION = '12.2.0';
+export const NEST_VERSION = '12.3.2';
 export const TESTCONTAINERS_VERSION = '12.2.1';
+
+/** What holds the logic behind the controllers, in each application pattern. */
+const MODULE_LOGIC_BY_PATTERN: Record<Pattern, string> = {
+  service: 'services',
+  cqrs: 'command and query handlers (`commands/`, `queries/`, one folder per operation)',
+};
+
+/** How that logic is unit-tested, in each application pattern. */
+const UNIT_TESTS_BY_PATTERN: Record<Pattern, string> = {
+  service: 'Services are unit-tested against the in-memory repositories in `test/fakes/`.',
+  cqrs: 'Command and query handlers are unit-tested through the buses, against the in-memory repositories in `test/fakes/`; `handlerTestingModule()` in `test/support/handler-testing-module.ts` wires them.',
+};
 
 export const baseLayer: LayerManifest = {
   id: 'base',
@@ -14,7 +27,7 @@ export const baseLayer: LayerManifest = {
     '@nestjs/config': '12.0.1',
     '@nestjs/core': NEST_VERSION,
     '@nestjs/mail': '0.0.1',
-    '@nestjs/swagger': '12.0.4',
+    '@nestjs/swagger': '12.0.5',
     '@nestjs/terminus': '12.1.0',
     '@nestjs/throttler': '6.7.1',
     bullmq: '6.4.2',
@@ -26,8 +39,8 @@ export const baseLayer: LayerManifest = {
     rxjs: '7.8.2',
   },
   devDependencies: {
-    '@nestjs/cli': '12.0.10',
-    '@nestjs/schematics': '12.0.10',
+    '@nestjs/cli': '12.0.11',
+    '@nestjs/schematics': '12.0.12',
     '@nestjs/testing': NEST_VERSION,
     '@swc/core': '1.16.20',
     '@testcontainers/redis': TESTCONTAINERS_VERSION,
@@ -89,9 +102,14 @@ export const baseLayer: LayerManifest = {
     },
     { key: 'COOKIE_SECRET', value: 'change-me-to-at-least-32-characters', secret: true },
     { key: 'SWAGGER_ENABLED', value: 'true', comment: 'Serve the OpenAPI UI at /docs' },
-    { key: 'REDIS_URL', value: 'redis://localhost:6379' },
+    { key: 'REDIS_URL', value: 'redis://localhost:6379', containerValue: 'redis://redis:6379' },
     { key: 'MAIL_TRANSPORT', value: 'smtp', comment: 'smtp | resend | log' },
-    { key: 'SMTP_URL', value: 'smtp://localhost:1025', comment: 'Mailpit in development' },
+    {
+      key: 'SMTP_URL',
+      value: 'smtp://localhost:1025',
+      comment: 'Mailpit in development',
+      containerValue: 'smtp://mailpit:1025',
+    },
     { key: 'RESEND_API_KEY', value: '', comment: 'Required when MAIL_TRANSPORT=resend' },
     { key: 'MAIL_FROM', value: 'no-reply@example.com' },
     { key: 'THROTTLE_TTL', value: '60000', comment: 'Rate-limit window in milliseconds' },
@@ -161,11 +179,11 @@ export const baseLayer: LayerManifest = {
   readme: [
     {
       title: 'Project layout',
-      body: `
+      body: (options) => `
 - \`src/main.ts\`, \`src/bootstrap/\`: \`createApp()\` builds the app; \`configureApp()\` applies the HTTP pipeline (security headers, CORS, CSRF, prefix, versioning, validation, Swagger)
 - \`src/config/\`: the env schema and the typed \`AppConfig\` accessor
 - \`src/common/\`: \`ErrorCode\`, the global exception filter, request validation, pagination
-- \`src/modules/\`: users, roles, permissions and sessions: controllers, services and repository ports
+- \`src/modules/\`: users, roles, permissions and sessions: controllers, ${MODULE_LOGIC_BY_PATTERN[options.pattern]} and repository ports
 - \`src/seed/\`: \`db:seed\`: system roles and the first admin
 - \`src/infra/\`: logger, Redis, queues, mail, rate limiting, health checks
 - \`src/database/\`: database module and schema
@@ -196,10 +214,10 @@ Mail is never sent inside a request. \`MailQueue.enqueue()\` adds a job to the \
     },
     {
       title: 'Tests',
-      body: `
+      body: (options) => `
 - \`test\` runs unit tests (\`src/**/*.spec.ts\`).
 - \`test:e2e\` runs \`test/**/*.e2e-spec.ts\` and \`test/**/*.int-spec.ts\` against real database and Redis containers (Testcontainers; Docker must be running).
-- Services are unit-tested against the in-memory repositories in \`test/fakes/\`. The suites in \`test/contracts/\` define how a repository must behave; they run against the fakes and, in \`test:e2e\`, against the real database.
+- ${UNIT_TESTS_BY_PATTERN[options.pattern]} The suites in \`test/contracts/\` define how a repository must behave; they run against the fakes and, in \`test:e2e\`, against the real database.
 - E2e tests boot the real app with \`createTestApp()\` from \`test/support/app.ts\` and call it over HTTP with \`request()\` from \`test/support/http.ts\`. Sent mail is captured in \`mailbox\`; \`test/support/auth.ts\` seeds users and signs them in.
 `,
     },

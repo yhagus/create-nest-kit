@@ -1,6 +1,7 @@
 import { stringify } from 'yaml';
 import type { PackageManager, ProjectOptions } from '../options.ts';
 import { frozenInstallCommand, runScriptCommand } from '../package-manager.ts';
+import { WEB_DIRECTORY } from './quickstart.ts';
 
 const NODE_VERSION = 24;
 const CHECK_SCRIPTS = ['lint', 'format:check', 'typecheck', 'test', 'test:e2e'];
@@ -20,9 +21,24 @@ export function renderCiWorkflow(options: ProjectOptions): string {
           ...CHECK_SCRIPTS.map((script) => ({ run: runScriptCommand(packageManager, script) })),
         ],
       },
+      ...(options.projectType === 'fullstack' && { web: webJob() }),
     },
   };
   return stringify(workflow);
+}
+
+/** Builds the front end, which has its own package and always uses bun. */
+function webJob(): Record<string, unknown> {
+  return {
+    'runs-on': 'ubuntu-latest',
+    defaults: { run: { 'working-directory': WEB_DIRECTORY } },
+    steps: [
+      { uses: 'actions/checkout@v7' },
+      ...packageManagerSetupSteps('bun'),
+      { run: frozenInstallCommand('bun') },
+      { run: runScriptCommand('bun', 'generate') },
+    ],
+  };
 }
 
 /** Steps that make `packageManager` and Node available, with dependency caching where setup-node supports it. */

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ALL_PERMISSIONS } from '../../src/modules/permissions/permission.js';
-import { RolesService } from '../../src/modules/roles/roles.service.js';
-import { UsersService } from '../../src/modules/users/users.service.js';
+import { RolesRepository } from '../../src/modules/roles/roles.repository.js';
+import { UsersRepository } from '../../src/modules/users/users.repository.js';
 import { seedDatabase } from '../../src/seed/seed.js';
 import { createTestApp, type TestApp } from '../support/app.js';
 import { login } from '../support/auth.js';
@@ -14,8 +14,8 @@ describe('seedDatabase', () => {
 
   /** What the seed is responsible for, without timestamps that a re-sync may move. */
   async function seededState() {
-    const roles = await testApp.app.get(RolesService).listRoles();
-    const users = await testApp.app.get(UsersService).listUsers({ page: 1, limit: 100 });
+    const roles = await testApp.app.get(RolesRepository).findAll();
+    const users = await testApp.app.get(UsersRepository).list({ page: 1, limit: 100 });
     return {
       roles: roles.map(({ id, name, permissions, isSystem }) => ({
         id,

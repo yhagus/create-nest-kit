@@ -6,21 +6,26 @@ template files plus a TypeScript **manifest**. Everything below lives in
 
 ## Layers
 
-| Layer id                        | Included when                    | Manifest                                      |
-| ------------------------------- | -------------------------------- | --------------------------------------------- |
-| `base`                          | always                           | `src/layers/base.ts`                          |
-| `platform/<fastify\|express>`   | `options.platform`               | `src/layers/platform/<name>.ts`               |
-| `database/<postgres\|mongodb>`  | `options.database`               | `src/layers/database/<name>.ts`               |
-| `validation/<library>`          | `options.validation`             | `src/layers/validation/<library>.ts`          |
-| `persistence/<orm>/core`        | `options.orm`                    | `src/layers/persistence/<orm>/core.ts`        |
-| `persistence/<orm>/auth-<auth>` | `options.orm` and `options.auth` | `src/layers/persistence/<orm>/auth-<auth>.ts` |
-| `auth/<jwt\|nest>`              | `options.auth`                   | `src/layers/auth/<name>.ts`                   |
+| Layer id                            | Included when                        | Manifest                                      |
+| ----------------------------------- | ------------------------------------ | --------------------------------------------- |
+| `base`                              | always                               | `src/layers/base.ts`                          |
+| `platform/<fastify\|express\|node>` | `options.platform`                   | `src/layers/platform/<name>.ts`               |
+| `database/<postgres\|mongodb>`      | `options.database`                   | `src/layers/database/<name>.ts`               |
+| `validation/<library>`              | `options.validation`                 | `src/layers/validation/<library>.ts`          |
+| `pattern/<pattern>/core`            | `options.pattern`                    | `src/layers/pattern/<pattern>/core.ts`        |
+| `persistence/<orm>/core`            | `options.orm`                        | `src/layers/persistence/<orm>/core.ts`        |
+| `persistence/<orm>/auth-<auth>`     | `options.orm` and `options.auth`     | `src/layers/persistence/<orm>/auth-<auth>.ts` |
+| `auth/<jwt\|nest>`                  | `options.auth`                       | `src/layers/auth/<name>.ts`                   |
+| `pattern/<pattern>/auth-<auth>`     | `options.pattern` and `options.auth` | `src/layers/pattern/<pattern>/auth-<auth>.ts` |
+| `web/nuxt`                          | `projectType: fullstack`             | `src/layers/web/nuxt.ts`                      |
 
 `<orm>` is one of `drizzle`, `prisma`, `typeorm`, `mikroorm`, `mongoose`. `<library>` is one of
-`zod`, `class-validator`, `valibot`, `arktype`.
+`zod`, `class-validator`, `valibot`, `arktype`. `<pattern>` is `service` or `cqrs`.
 
 - **Order is fixed** (the order of `LAYERS` in `src/layers/registry.ts`). Every project resolves
-  exactly seven layers, in the order of the table.
+  the first nine layers of the table, in its order; an API + web project adds `web/nuxt` last.
+  `web/nuxt` only adds files under `web/`, a package of its own that the generated project's
+  lint, format, typecheck and Docker image skip.
 - **Template folder:** `templates/<layer id>/`, e.g. `templates/persistence/drizzle/auth-jwt/`.
   A layer without a folder contributes no files.
 - **Where migrations live depends on the ORM's history format:**
@@ -62,11 +67,14 @@ Code in one layer imports another layer's variant code only through fixed paths,
 | `src/auth/auth.dto.ts`                    | `validation/*`                                                              |
 | `src/modules/users/users.dto.ts`          | `validation/*`                                                              |
 | `src/modules/roles/roles.dto.ts`          | `validation/*`                                                              |
+| `src/modules/features.module.ts`          | `pattern/<pattern>/core` (imported by `app.module.ts`)                      |
+| `src/seed/seed.ts`                        | `pattern/<pattern>/core` (`db:seed`; `seedDatabase` for the seed test)      |
 | `src/database/database.module.ts`         | `persistence/<orm>/core`                                                    |
 | `src/database/database.health.ts`         | `persistence/<orm>/core`                                                    |
 | `src/auth/auth.module.ts`                 | `auth/*`                                                                    |
 | `src/auth/decorators.ts`                  | `auth/*`                                                                    |
 | `src/database/auth-persistence.module.ts` | `persistence/<orm>/auth-<auth>` (imported by that style's `auth.module.ts`) |
+| `src/auth/auth-flows.ts`                  | `pattern/<pattern>/auth-<auth>` (spread into that style's `auth.module.ts`) |
 | `test/support/database.global-setup.ts`   | `database/*` or `persistence/*/core`                                        |
 | `test/support/reset-database.ts`          | `database/*` or `persistence/*/core`                                        |
 
@@ -88,8 +96,27 @@ class, or a schema plus its inferred type under the same name. Response views (`
 the domain types in `base`, so the libraries can't drift apart; `src/config/env.spec.ts` and the e2e suite run
 unchanged against every library.
 
-The auth flows behind `/auth` are the `AuthService` port in base (`src/auth/auth.service.ts`); each
-`auth/*` layer binds its implementation in its `auth.module.ts`, so that file is the only entry point.
+`base` and `auth/*` hold only what every application pattern shares: domain types, views,
+repository ports, the auth guards and token helpers, and the test suites. Each `auth/*` layer's
+global `AuthModule` provides `PasswordHasher` and `SessionDenyList`. The controllers, the logic
+behind them, the feature modules and the seed come from `pattern/<pattern>/core`, the `/auth` flows
+from `pattern/<pattern>/auth-<auth>`. `PermissionsModule` only lists a constant, so it stays in
+`base` and `FeaturesModule` imports it. What the pattern slots export:
+
+| Slot                             | Exports                                                                                                                                         |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/modules/features.module.ts` | `FeaturesModule`, which imports the feature modules and their controllers: `/auth`, users, roles, permissions and sessions                      |
+| `src/seed/seed.ts`               | `seedDatabase(app): Promise<SeedReport>`; run directly, it is the `db:seed` entry point                                                         |
+| `src/auth/auth-flows.ts`         | `AUTH_FLOWS`: the `imports`, `providers` and `exports` that `AuthModule` adds, so the flows can use its token helpers and the auth repositories |
+
+In the service pattern the flows are the `AuthService` port (`src/auth/auth.service.ts`, in
+`pattern/service/core`); each `pattern/service/auth-<auth>` layer binds its implementation in
+`auth-flows.ts`. In the CQRS pattern the flows are commands: `pattern/cqrs/core` holds their classes
+(`src/auth/commands/<operation>/<operation>.command.ts`), which `AuthController` dispatches, and each
+`pattern/cqrs/auth-<auth>` layer lists their handlers (`<operation>.handler.ts`, next to the command)
+in `auth-flows.ts`. The e2e suite and `test/support/` seed through the repository ports and
+`PasswordHasher`, so they run unchanged against every pattern. Unit specs of a pattern's services or
+handlers live in that pattern's layer.
 
 ## Manifest
 
@@ -114,13 +141,17 @@ interface EnvVar {
   value: string | ((options) => string);
   comment?: string;
   secret?: boolean;
+  containerValue?: string; // the value inside the --dev-env docker container
 }
 ```
 
 - `env`: written to `.env` and `.env.example`, grouped under a `# --- <layer id> ---` header in
   layer order. With `secret: true`, `.env` gets a random 48-byte base64url value and
   `.env.example` gets `value` as a placeholder. Use a function `value` for option-dependent
-  defaults, e.g. `value: (o) => String(o.csrf)` for `CSRF_ENABLED`.
+  defaults, e.g. `value: (o) => String(o.csrf)` for `CSRF_ENABLED`. A variable that points at a
+  compose service sets `containerValue`, with the service's name instead of `localhost`
+  (`redis://redis:6379`): the `api` service of `--dev-env docker` sets it, and `.env` keeps
+  `value` for tools on the host.
 - `packageJson`: deep-merged across layers; arrays are unioned (e.g. `pnpm.onlyBuiltDependencies`).
   `name`, `version`, `private`, `type`, `engines`, `packageManager`, `scripts`, `dependencies` and `devDependencies`
   are owned by the renderer and rejected here.
@@ -215,13 +246,13 @@ non-zero on any failure. The matrix dir is `$MATRIX_DIR`, defaulting to `<os tmp
 (outside the repo, for the same reasons as the playground). Output goes to `<matrix dir>/<id>.log`; passing projects are deleted unless
 `--keep` is given.
 
-| Flag               | Effect                                                                                                               |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `--only <glob>`    | Combos whose id matches, e.g. `--only 'fastify-*-jwt-*'`. Ids are `<platform>-<database>-<orm>-<auth>-<validation>`. |
-| `--subset pr\|all` | `pr`: 20 combos covering every pair of values of any two choices (pairwise). `all` (default): all 80.                |
-| `--steps <list>`   | Comma-separated subset of `install,typecheck,build,lint,format:check,test,test:e2e`.                                 |
-| `--keep`           | Keep passing projects too.                                                                                           |
-| `--list`           | Print the ids of the selected, ready combos as a JSON array and run nothing (CI builds its matrix from it).          |
+| Flag               | Effect                                                                                                                         |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `--only <glob>`    | Combos whose id matches, e.g. `--only 'fastify-*-jwt-*'`. Ids are `<platform>-<database>-<orm>-<auth>-<validation>-<pattern>`. |
+| `--subset pr\|all` | `pr`: 20 combos covering every pair of values of any two choices (pairwise). `all` (default): all 240.                         |
+| `--steps <list>`   | Comma-separated subset of `install,typecheck,build,lint,format:check,test,test:e2e`.                                           |
+| `--keep`           | Keep passing projects too.                                                                                                     |
+| `--list`           | Print the ids of the selected, ready combos as a JSON array and run nothing (CI builds its matrix from it).                    |
 
 The selection logic lives in `src/matrix/select.ts`; combos come from `listCombos()` and
 `prSubset()` in `src/options.ts`.

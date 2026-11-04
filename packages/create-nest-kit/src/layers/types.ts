@@ -11,6 +11,11 @@ export interface EnvVar {
   comment?: string;
   /** When true, `.env` gets a random 48-byte base64url value instead of `value`. */
   secret?: boolean;
+  /**
+   * The value inside the dev container (`--dev-env docker`), for a variable that points at a
+   * compose service: the service's name replaces `localhost`. `.env` keeps `value`, for the host.
+   */
+  containerValue?: string;
 }
 
 export interface ComposeContribution {

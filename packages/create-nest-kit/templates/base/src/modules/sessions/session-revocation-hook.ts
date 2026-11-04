@@ -11,10 +11,6 @@ export interface SessionRevocationHook {
 /**
  * Registers a provider as a `SessionRevocationHook`: decorate its class with
  * `@SessionRevocationHook()` and implement `onSessionsRevoked()`. Works from any module.
- *
- * Don't combine it with another `DiscoveryService.createDecorator()` decorator (such as
- * `@ExpiredDataPurger()`) on one class: Nest discovers a class by one of them only.
- * `discoverProviders()` then fails at startup; split the class instead.
  */
 export const SessionRevocationHook = DiscoveryService.createDecorator();
 

@@ -42,7 +42,13 @@ export const fixtureLayers: LayerManifest[] = [
     id: 'database/postgres',
     status: 'ready',
     when: (options) => options.database === 'postgres',
-    env: [{ key: 'DATABASE_URL', value: 'postgres://app:app@localhost:5432/app' }],
+    env: [
+      {
+        key: 'DATABASE_URL',
+        value: 'postgres://app:app@localhost:5432/app',
+        containerValue: 'postgres://app:app@postgres:5432/app',
+      },
+    ],
     compose: {
       services: {
         postgres: { image: 'postgres:18-alpine', volumes: ['pgdata:/var/lib/postgresql'] },
@@ -59,6 +65,11 @@ export const fixtureLayers: LayerManifest[] = [
     id: 'validation/valibot',
     status: 'planned',
     when: (options) => options.validation === 'valibot',
+  },
+  {
+    id: 'pattern/service/core',
+    status: 'ready',
+    when: (options) => options.pattern === 'service',
   },
   {
     id: 'persistence/drizzle/core',
@@ -79,6 +90,11 @@ export const fixtureLayers: LayerManifest[] = [
         body: (options) => `Email verification is ${options.emailVerification ? 'on' : 'off'}.`,
       },
     ],
+  },
+  {
+    id: 'pattern/service/auth-jwt',
+    status: 'ready',
+    when: (options) => options.pattern === 'service' && options.auth === 'jwt',
   },
 ];
 

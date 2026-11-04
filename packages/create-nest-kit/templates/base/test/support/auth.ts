@@ -3,17 +3,20 @@ import type { Type } from '@nestjs/common';
 import type { SentMail } from '@nestjs/mail';
 import type { Queue } from 'bullmq';
 import { expect, vi } from 'vitest';
+import { PasswordHasher } from '../../src/auth/password-hasher.js';
 import { MAIL_QUEUE } from '../../src/infra/queue/queue-names.js';
+import { ALL_PERMISSIONS } from '../../src/modules/permissions/permission.js';
 import { type Role, SystemRoleName } from '../../src/modules/roles/role.js';
-import { RolesService } from '../../src/modules/roles/roles.service.js';
+import { type NewRole, RolesRepository } from '../../src/modules/roles/roles.repository.js';
+import { normalizeEmail } from '../../src/modules/users/email.js';
 import type { User } from '../../src/modules/users/user.js';
-import { type CreateUserInput, UsersService } from '../../src/modules/users/users.service.js';
+import { UsersRepository } from '../../src/modules/users/users.repository.js';
 import type { TestApp } from './app.js';
 import { request } from './http.js';
 import { expectShape, isRecord } from './json.js';
 
-// Seeding goes through the domain services, the same in every auth style; signing in goes
-// through HTTP, like a real client.
+// Seeding writes through the repository ports and `PasswordHasher`, so it doesn't depend on the
+// services or handlers behind the routes; signing in goes through HTTP, like a real client.
 
 export const TEST_PASSWORD = 'correct horse battery';
 const MAIL_TIMEOUT_MS = 5_000;
@@ -50,24 +53,63 @@ export interface SignedInUser extends TokenPair {
   password: string;
 }
 
-/** Creates the system roles `admin` and `user`, as `db:seed` does. */
+export interface NewTestUser {
+  email: string;
+  password: string;
+  name: string;
+  roleIds: string[];
+  emailVerified: boolean;
+}
+
+/** Creates the system roles `admin` and `user`, as `db:seed` does, unless they exist. */
 export async function seedSystemRoles(testApp: TestApp): Promise<{ admin: Role; user: Role }> {
-  return testApp.app.get(RolesService).syncSystemRoles();
+  const admin = await ensureRole(testApp, {
+    name: SystemRoleName.Admin,
+    description: 'Full access',
+    permissions: [...ALL_PERMISSIONS],
+    isSystem: true,
+  });
+  const user = await ensureRole(testApp, {
+    name: SystemRoleName.User,
+    description: 'Every self-registered user',
+    permissions: [],
+    isSystem: true,
+  });
+  return { admin, user };
+}
+
+async function ensureRole(testApp: TestApp, role: NewRole): Promise<Role> {
+  const roles = testApp.app.get(RolesRepository);
+  return (await roles.findByName(role.name)) ?? roles.create(role);
+}
+
+/** The role named `name`; seed the system roles first. */
+export async function findRole(testApp: TestApp, name: string): Promise<Role> {
+  const role = await testApp.app.get(RolesRepository).findByName(name);
+  if (!role) throw new Error(`No role is named ${name}; seed the system roles first`);
+  return role;
 }
 
 /** A verified user with the `user` role (or the given `roleIds`), created directly. Seed the system roles first. */
 export async function createUser(
   testApp: TestApp,
-  overrides: Partial<CreateUserInput> = {},
+  overrides: Partial<NewTestUser> = {},
 ): Promise<User> {
-  const userRole = await testApp.app.get(RolesService).getRoleByName(SystemRoleName.User);
-  return testApp.app.get(UsersService).createUser({
+  const userRole = await findRole(testApp, SystemRoleName.User);
+  const user: NewTestUser = {
     email: 'ada@example.com',
     password: TEST_PASSWORD,
     name: 'Ada Lovelace',
     roleIds: [userRole.id],
     emailVerified: true,
     ...overrides,
+  };
+  return testApp.app.get(UsersRepository).create({
+    email: normalizeEmail(user.email),
+    passwordHash: await testApp.app.get(PasswordHasher).hash(user.password),
+    name: user.name,
+    emailVerifiedAt: user.emailVerified ? new Date() : null,
+    roleIds: user.roleIds,
   });
 }
 
@@ -96,7 +138,7 @@ export async function refresh(testApp: TestApp, refreshToken: string): Promise<T
 /** A new user (see `createUser`), signed in. */
 export async function createSignedInUser(
   testApp: TestApp,
-  overrides: Partial<CreateUserInput> = {},
+  overrides: Partial<NewTestUser> = {},
 ): Promise<SignedInUser> {
   const user = await createUser(testApp, overrides);
   const password = overrides.password ?? TEST_PASSWORD;

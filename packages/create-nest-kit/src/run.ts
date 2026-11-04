@@ -5,8 +5,13 @@ import * as p from '@clack/prompts';
 import { parseCliArgs, UsageError, type CliArgs } from './args.ts';
 import { formatDryRun } from './dry-run.ts';
 import { composeProject, CompositionError, writeProject } from './generate/compose.ts';
-import { initGitRepository, installDependencies } from './generate/post.ts';
-import { MAILPIT_URL, quickstartCommands } from './generate/quickstart.ts';
+import { initGitRepository, installDependencies, installWebDependencies } from './generate/post.ts';
+import {
+  MAILPIT_URL,
+  quickstartCommands,
+  WEB_DIRECTORY,
+  webQuickstartCommands,
+} from './generate/quickstart.ts';
 import { HELP_TEXT } from './help.ts';
 import { describeRun } from './labels.ts';
 import { loadLayerSet } from './layers/load.ts';
@@ -92,6 +97,10 @@ async function runCommand(argv: readonly string[], environment: RunEnvironment):
   p.log.success(`Created ${options.name} in ${location}`);
 
   if (options.install) await installDependencies(targetDir, options.packageManager);
+  const isWebInstalled =
+    options.install &&
+    options.projectType === 'fullstack' &&
+    (await installWebDependencies(path.join(targetDir, WEB_DIRECTORY)));
   if (options.git) await reportGit(targetDir);
 
   const nextSteps = [
@@ -101,6 +110,8 @@ async function runCommand(argv: readonly string[], environment: RunEnvironment):
     `Mailpit (dev mail): ${MAILPIT_URL}`,
   ];
   p.note(nextSteps.join('\n'), 'Next steps');
+  const webSteps = webQuickstartCommands(options, isWebInstalled);
+  if (webSteps.length > 0) p.note(webSteps.join('\n'), 'Front end, in a second terminal');
   p.outro('Happy hacking!');
   return EXIT_SUCCESS;
 }

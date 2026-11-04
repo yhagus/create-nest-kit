@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { RolesService } from '../../src/modules/roles/roles.service.js';
 import { createTestApp, type TestApp } from '../support/app.js';
 import {
   createSignedInUser,
@@ -7,6 +6,7 @@ import {
   expectAccessTokenAccepted,
   expectAccessTokenRefused,
   expectRefreshTokenRefused,
+  findRole,
   login,
   seedAdmin,
   type SignedInUser,
@@ -142,7 +142,7 @@ describe('users', () => {
 
   describe('POST /users', () => {
     it('creates a user with roles and a verified email', async () => {
-      const userRole = await testApp.app.get(RolesService).getRoleByName('user');
+      const userRole = await findRole(testApp, 'user');
 
       const response = await request(testApp, 'POST /users', {
         accessToken: admin.accessToken,

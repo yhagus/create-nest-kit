@@ -1,6 +1,5 @@
 import { type DynamicModule, Module, type ModuleMetadata } from '@nestjs/common';
 import type { MailTransport } from '@nestjs/mail';
-import { AuthHttpModule } from './auth/auth-http.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
@@ -11,10 +10,7 @@ import { MailModule } from './infra/mail/mail.module.js';
 import { QueueModule } from './infra/queue/queue.module.js';
 import { RedisModule } from './infra/redis/redis.module.js';
 import { ThrottlerModule } from './infra/throttler/throttler.module.js';
-import { PermissionsModule } from './modules/permissions/permissions.module.js';
-import { RolesModule } from './modules/roles/roles.module.js';
-import { SessionsModule } from './modules/sessions/sessions.module.js';
-import { UsersModule } from './modules/users/users.module.js';
+import { FeaturesModule } from './modules/features.module.js';
 
 export interface AppModuleOptions {
   env: Env;
@@ -42,11 +38,7 @@ export class AppModule {
         MailModule.forRoot({ transport: mailTransport }),
         ThrottlerModule,
         AuthModule,
-        AuthHttpModule,
-        UsersModule,
-        RolesModule,
-        PermissionsModule,
-        SessionsModule,
+        FeaturesModule,
         HealthModule,
         ...extraImports,
       ],

@@ -1,6 +1,9 @@
 dist
 coverage
 
+# The front end of an API + web project: a package of its own, with its own tooling
+web
+
 # Lockfiles and package manager files
 pnpm-lock.yaml
 package-lock.json

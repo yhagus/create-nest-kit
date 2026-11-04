@@ -31,7 +31,8 @@ function matches(combo: Combo, choices: PartialCombo): boolean {
     (choices.database === undefined || combo.database === choices.database) &&
     (choices.orm === undefined || combo.orm === choices.orm) &&
     (choices.auth === undefined || combo.auth === choices.auth) &&
-    (choices.validation === undefined || combo.validation === choices.validation)
+    (choices.validation === undefined || combo.validation === choices.validation) &&
+    (choices.pattern === undefined || combo.pattern === choices.pattern)
   );
 }
 

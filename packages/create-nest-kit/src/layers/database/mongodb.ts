@@ -33,6 +33,7 @@ export const mongodbLayer: LayerManifest = {
       key: 'MONGODB_URI',
       value: 'mongodb://localhost:27017/app?directConnection=true',
       comment: 'directConnection: the replica set member is only known as localhost inside Docker',
+      containerValue: 'mongodb://mongo:27017/app?directConnection=true',
     },
   ],
   compose: {

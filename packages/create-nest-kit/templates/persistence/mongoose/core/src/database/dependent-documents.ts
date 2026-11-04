@@ -1,7 +1,6 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
 import type { ClientSession } from 'mongoose';
-import { discoverProviders } from '../common/discover-providers.js';
 
 /**
  * Deletes the documents that belong to users or sessions being deleted. MongoDB has no foreign
@@ -17,10 +16,6 @@ export interface DependentDocuments {
 /**
  * Registers a provider as `DependentDocuments`: decorate its class with
  * `@DependentDocuments()` and implement both methods. Works from any module.
- *
- * Don't combine it with another `DiscoveryService.createDecorator()` decorator (such as
- * `@ExpiredDataPurger()`) on one class: Nest discovers a class by one of them only.
- * `discoverProviders()` then fails at startup; split the class instead.
  */
 export const DependentDocuments = DiscoveryService.createDecorator();
 
@@ -46,18 +41,16 @@ export class CascadeDelete implements OnModuleInit {
   constructor(private readonly discovery: DiscoveryService) {}
 
   onModuleInit(): void {
-    this.dependents = discoverProviders(
-      this.discovery,
-      DependentDocuments,
-      '@DependentDocuments()',
-    ).map((wrapper) => {
-      if (!isDependentDocuments(wrapper.instance)) {
-        throw new Error(
-          `${wrapper.name} is a @DependentDocuments() without deleteForUsers() and deleteForSessions()`,
-        );
-      }
-      return wrapper.instance;
-    });
+    this.dependents = this.discovery
+      .getProviders({ metadataKey: DependentDocuments.KEY })
+      .map((wrapper) => {
+        if (!isDependentDocuments(wrapper.instance)) {
+          throw new Error(
+            `${wrapper.name} is a @DependentDocuments() without deleteForUsers() and deleteForSessions()`,
+          );
+        }
+        return wrapper.instance;
+      });
   }
 
   async deleteForUsers(userIds: readonly string[], session: ClientSession): Promise<void> {

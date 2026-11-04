@@ -7,6 +7,7 @@ export interface ResolvedEnvVar {
   value: string;
   comment?: string;
   isSecret: boolean;
+  containerValue?: string;
 }
 
 export interface EnvGroup {
@@ -149,6 +150,7 @@ class ManifestMerger {
       value: this.resolve(envVar.value),
       ...(envVar.comment === undefined ? {} : { comment: envVar.comment }),
       isSecret: envVar.secret ?? false,
+      ...(envVar.containerValue === undefined ? {} : { containerValue: envVar.containerValue }),
     }));
     const entries = Object.fromEntries(resolved.map((envVar) => [envVar.key, envVar]));
     const newKeys = this.addKeyed('env var', this.envVars, entries, layer.id);

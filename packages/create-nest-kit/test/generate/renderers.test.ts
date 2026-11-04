@@ -90,14 +90,90 @@ describe('renderEnv / renderEnvExample', () => {
 
 describe('renderDockerCompose', () => {
   it('renders valid YAML with sorted services and named volumes', () => {
-    const { manifest } = fixtureProject();
-    const content = renderDockerCompose(manifest);
+    const { options, manifest } = fixtureProject();
+    const content = renderDockerCompose(options, manifest);
 
     expect(parseYaml(content)).toMatchObject({
       services: { mailpit: {}, postgres: {} },
       volumes: { pgdata: {} },
     });
     expect(content).toMatchSnapshot();
+  });
+
+  it('runs no API service in the local dev environment', () => {
+    const { options, manifest } = fixtureProject();
+
+    expect(parseYaml(renderDockerCompose(options, manifest))).not.toHaveProperty('services.api');
+  });
+
+  it('runs the API in a container in the docker dev environment', () => {
+    const { options, manifest } = fixtureProject({
+      devEnvironment: 'docker',
+      packageManager: 'pnpm',
+    });
+
+    expect(parseYaml(renderDockerCompose(options, manifest))).toMatchObject({
+      services: {
+        api: {
+          command: [
+            'sh',
+            '-c',
+            'corepack pnpm install && npm run db:migrate && npm run db:seed && npm run start:dev',
+          ],
+          environment: {
+            COREPACK_ENABLE_DOWNLOAD_PROMPT: '0',
+            DATABASE_URL: 'postgres://app:app@postgres:5432/app',
+          },
+          volumes: ['.:/app', 'node-modules:/app/node_modules'],
+          depends_on: {
+            mailpit: { condition: 'service_started' },
+            postgres: { condition: 'service_started' },
+          },
+        },
+      },
+      volumes: { 'node-modules': {}, pgdata: {} },
+    });
+  });
+
+  it('runs the front end in a container too in a docker API + web project', () => {
+    const { options, manifest } = fixtureProject({
+      devEnvironment: 'docker',
+      projectType: 'fullstack',
+    });
+
+    expect(parseYaml(renderDockerCompose(options, manifest))).toMatchObject({
+      services: {
+        web: {
+          command: ['sh', '-c', 'bun install && bun run dev --host 0.0.0.0'],
+          ports: ['5173:5173'],
+          volumes: ['./web:/app', 'web-node-modules:/app/node_modules'],
+        },
+      },
+      volumes: { 'web-node-modules': {} },
+    });
+  });
+
+  it('runs no front end container in a local API + web project', () => {
+    const { options, manifest } = fixtureProject({ projectType: 'fullstack' });
+
+    expect(parseYaml(renderDockerCompose(options, manifest))).not.toHaveProperty('services.web');
+  });
+
+  it.each([
+    ['npm', 'npm install'],
+    ['yarn', 'corepack yarn install'],
+    ['bun', 'npx --yes bun@1.4.0 install'],
+  ] as const)('installs with %s in the dev container', (packageManager, expectedInstall) => {
+    const { options, manifest } = fixtureProject({ devEnvironment: 'docker', packageManager });
+    const compose = z
+      .object({
+        services: z.object({
+          api: z.object({ command: z.tuple([z.string(), z.string(), z.string()]) }),
+        }),
+      })
+      .parse(parseYaml(renderDockerCompose(options, manifest)));
+
+    expect(compose.services.api.command[2]).toMatch(new RegExp(`^${expectedInstall} && `));
   });
 });
 
@@ -117,6 +193,37 @@ describe('renderReadme', () => {
     const { options, manifest } = fixtureProject({ packageManager });
 
     expect(renderReadme(options, manifest)).toContain(`\n${expectedCommand}\n`);
+  });
+
+  it('starts the front end from web/ with bun in a local API + web project', () => {
+    const { options, manifest } = fixtureProject({
+      projectType: 'fullstack',
+      packageManager: 'pnpm',
+    });
+
+    expect(renderReadme(options, manifest)).toContain('\ncd web\nbun install\nbun run dev\n');
+  });
+
+  it('follows both containers in a docker API + web project', () => {
+    const { options, manifest } = fixtureProject({
+      devEnvironment: 'docker',
+      projectType: 'fullstack',
+    });
+    const readme = renderReadme(options, manifest);
+
+    expect(readme).toContain('\ndocker compose logs -f api web\n');
+    expect(readme).not.toContain('\nbun run dev\n');
+  });
+
+  it('follows the dev container instead of running the scripts in the docker dev environment', () => {
+    const { options, manifest } = fixtureProject({
+      devEnvironment: 'docker',
+      packageManager: 'pnpm',
+    });
+    const readme = renderReadme(options, manifest);
+
+    expect(readme).toContain('\ndocker compose up -d\ndocker compose logs -f api\n');
+    expect(readme).not.toContain('\npnpm db:migrate\n');
   });
 });
 
@@ -167,5 +274,32 @@ describe('renderCiWorkflow', () => {
     const workflow = ciWorkflowSchema.parse(parseYaml(renderCiWorkflow(options)));
 
     expect(workflow.jobs.check.steps).toContainEqual({ uses: 'pnpm/action-setup@v6' });
+  });
+});
+
+describe('renderCiWorkflow for the front end', () => {
+  const webJobSchema = z.object({
+    jobs: z.object({
+      web: z.object({ steps: z.array(z.record(z.string(), z.unknown())) }).optional(),
+    }),
+  });
+
+  it('builds web/ with bun in an API + web project', () => {
+    const { options } = fixtureProject({ projectType: 'fullstack', packageManager: 'pnpm' });
+    const workflow = webJobSchema.parse(parseYaml(renderCiWorkflow(options)));
+
+    expect(workflow.jobs.web?.steps).toEqual(
+      expect.arrayContaining([
+        { uses: 'oven-sh/setup-bun@v2' },
+        { run: 'bun install --frozen-lockfile' },
+        { run: 'bun run generate' },
+      ]),
+    );
+  });
+
+  it('has no front end job in an API project', () => {
+    const { options } = fixtureProject();
+
+    expect(webJobSchema.parse(parseYaml(renderCiWorkflow(options))).jobs.web).toBeUndefined();
   });
 });

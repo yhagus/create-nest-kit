@@ -14,6 +14,9 @@ export const REQUIRED_SLOTS: readonly string[] = [
   'src/auth/auth.dto.ts',
   'src/modules/users/users.dto.ts',
   'src/modules/roles/roles.dto.ts',
+  // pattern/<pattern>/core
+  'src/modules/features.module.ts',
+  'src/seed/seed.ts',
   // persistence/<orm>/core
   'src/database/database.module.ts',
   'src/database/database.health.ts',
@@ -22,6 +25,8 @@ export const REQUIRED_SLOTS: readonly string[] = [
   'src/auth/decorators.ts',
   // persistence/<orm>/auth-<auth>, imported by that auth style's auth.module.ts
   'src/database/auth-persistence.module.ts',
+  // pattern/<pattern>/auth-<auth>, spread into that auth style's auth.module.ts
+  'src/auth/auth-flows.ts',
   // database/* or persistence/<orm>/core
   'test/support/database.global-setup.ts',
   'test/support/reset-database.ts',

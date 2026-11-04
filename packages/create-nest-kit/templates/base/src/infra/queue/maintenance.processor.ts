@@ -1,7 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger, type OnModuleInit } from '@nestjs/common';
 import { DiscoveryService } from '@nestjs/core';
-import { discoverProviders } from '../../common/discover-providers.js';
 import { ExpiredDataPurger, isExpiredDataPurger } from './expired-data-purger.js';
 import { MAINTENANCE_QUEUE } from './queue-names.js';
 
@@ -21,14 +20,14 @@ export class MaintenanceProcessor extends WorkerHost implements OnModuleInit {
   }
 
   onModuleInit(): void {
-    this.purgers = discoverProviders(this.discovery, ExpiredDataPurger, '@ExpiredDataPurger()').map(
-      (wrapper) => {
+    this.purgers = this.discovery
+      .getProviders({ metadataKey: ExpiredDataPurger.KEY })
+      .map((wrapper) => {
         if (!isExpiredDataPurger(wrapper.instance)) {
           throw new Error(`${wrapper.name} is an @ExpiredDataPurger() without purgeExpired()`);
         }
         return { name: wrapper.name, purger: wrapper.instance };
-      },
-    );
+      });
   }
 
   async process(): Promise<void> {

@@ -4,13 +4,10 @@ import { AuthorizationModule } from '@nestjs/authorization';
 import { AppConfig } from '../config/app-config.js';
 import { AuthPersistenceModule } from '../database/auth-persistence.module.js';
 import { webAppLink } from '../infra/mail/mailables/web-app-link.js';
-import { RolesModule } from '../modules/roles/roles.module.js';
-import { SessionsModule } from '../modules/sessions/sessions.module.js';
-import { UsersModule } from '../modules/users/users.module.js';
+import { SessionDenyList } from '../modules/sessions/session-deny-list.js';
 import { AccessTokenProvider } from './access-token.provider.js';
-import { AuthService } from './auth.service.js';
+import { AUTH_FLOWS } from './auth-flows.js';
 import { EmailVerificationMailer } from './email-verification-mailer.js';
-import { NestAuthService } from './nest-auth.service.js';
 import { PasswordHasher } from './password-hasher.js';
 import { PasswordResetMailer } from './password-reset-mailer.js';
 import { PermissionPolicy } from './permission.policy.js';
@@ -23,8 +20,9 @@ const milliseconds = (value: number): Duration => `${value}ms`;
 /**
  * Authentication with `@nestjs/authentication` (JWT access tokens, rotating refresh tokens,
  * password reset and email verification links, scrypt passwords) and deny-by-default
- * authorization with `@nestjs/authorization`. Global, so domain modules can use
- * `PasswordHasher` and the auth routes `AuthService` without importing this module back.
+ * authorization with `@nestjs/authorization`. Global, so other modules can use
+ * `PasswordHasher`, `SessionDenyList` and what the `/auth` flows export without importing
+ * this module back.
  */
 @Global()
 @Module({
@@ -54,19 +52,19 @@ const milliseconds = (value: number): Duration => `${value}ms`;
     }),
     AuthorizationModule.forRoot(),
     AuthPersistenceModule,
-    UsersModule,
-    RolesModule,
-    SessionsModule,
+    ...AUTH_FLOWS.imports,
   ],
   providers: [
     { provide: PasswordHasher, useClass: ScryptPasswordHasher },
-    { provide: AuthService, useClass: NestAuthService },
+    SessionDenyList,
     AccessTokenProvider,
     PasswordResetMailer,
     EmailVerificationMailer,
     PermissionPolicy,
     RefreshTokenRevocationHook,
+    // In this module rather than one of their own, so the flows can use the providers above.
+    ...AUTH_FLOWS.providers,
   ],
-  exports: [PasswordHasher, AuthService],
+  exports: [PasswordHasher, SessionDenyList, ...AUTH_FLOWS.exports],
 })
 export class AuthModule {}

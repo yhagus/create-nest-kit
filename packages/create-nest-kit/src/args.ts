@@ -3,10 +3,13 @@ import {
   AUTH_STYLES,
   compatibilityProblem,
   DATABASES,
+  DEV_ENVIRONMENTS,
   ORMS,
   packageNameProblem,
   PACKAGE_MANAGERS,
+  PATTERNS,
   PLATFORMS,
+  PROJECT_TYPES,
   VALIDATION_LIBRARIES,
   type ProjectChoices,
 } from './options.ts';
@@ -33,12 +36,15 @@ export class UsageError extends Error {
 
 const FLAGS = {
   name: { type: 'string' },
+  type: { type: 'string' },
   platform: { type: 'string' },
   db: { type: 'string' },
   orm: { type: 'string' },
   auth: { type: 'string' },
   validation: { type: 'string' },
+  pattern: { type: 'string' },
   pm: { type: 'string' },
+  'dev-env': { type: 'string' },
   'email-verification': { type: 'boolean' },
   csrf: { type: 'boolean' },
   install: { type: 'boolean' },
@@ -58,12 +64,15 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
 
   // Choices not given stay undefined, which both the wizard and the options schema treat as "not chosen".
   const choices: Partial<ProjectChoices> = {
+    projectType: parseChoice('--type', PROJECT_TYPES, values.type),
     platform: parseChoice('--platform', PLATFORMS, values.platform),
     database: parseChoice('--db', DATABASES, values.db),
     orm: parseChoice('--orm', ORMS, values.orm),
     auth: parseChoice('--auth', AUTH_STYLES, values.auth),
     validation: parseChoice('--validation', VALIDATION_LIBRARIES, values.validation),
+    pattern: parseChoice('--pattern', PATTERNS, values.pattern),
     packageManager: parseChoice('--pm', PACKAGE_MANAGERS, values.pm),
+    devEnvironment: parseChoice('--dev-env', DEV_ENVIRONMENTS, values['dev-env']),
     emailVerification: values['email-verification'],
     csrf: values.csrf,
     install: values.install,

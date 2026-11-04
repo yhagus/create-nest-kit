@@ -10,6 +10,7 @@ function comboWith(platform: Platform): Combo {
     orm: 'drizzle',
     auth: 'jwt',
     validation: 'class-validator',
+    pattern: 'service',
   } as const;
   return { ...combo, id: comboId(combo) };
 }
@@ -48,14 +49,16 @@ describe('parseMatrixArgs', () => {
 
 describe('selectCombos', () => {
   it('filters by a glob on the combo id', () => {
-    const ids = selectCombos({ subset: 'all', only: 'express-*-nest-valibot' }).map((c) => c.id);
+    const ids = selectCombos({ subset: 'all', only: 'express-*-nest-valibot-cqrs' }).map(
+      (c) => c.id,
+    );
 
     expect(ids).toEqual([
-      'express-postgres-drizzle-nest-valibot',
-      'express-postgres-prisma-nest-valibot',
-      'express-postgres-typeorm-nest-valibot',
-      'express-postgres-mikroorm-nest-valibot',
-      'express-mongodb-mongoose-nest-valibot',
+      'express-postgres-drizzle-nest-valibot-cqrs',
+      'express-postgres-prisma-nest-valibot-cqrs',
+      'express-postgres-typeorm-nest-valibot-cqrs',
+      'express-postgres-mikroorm-nest-valibot-cqrs',
+      'express-mongodb-mongoose-nest-valibot-cqrs',
     ]);
   });
 

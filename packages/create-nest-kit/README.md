@@ -42,20 +42,23 @@ Requires Node.js ≥ 24.15. The generated project's e2e tests need Docker.
 
 ## Options
 
-| Option             | Choices (default first)                                                           | Flag                                                  |
-| ------------------ | --------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Project folder     | `nest-api`, created in the current folder; `.` uses the current folder itself     | positional `[dir]`                                    |
-| Package name       | the folder's name; asked when that isn't a valid npm package name                 | `--name <package-name>`                               |
-| HTTP platform      | Fastify · Express                                                                 | `--platform fastify\|express`                         |
-| Database           | PostgreSQL · MongoDB                                                              | `--db postgres\|mongodb`                              |
-| ORM / ODM          | PostgreSQL: Drizzle · Prisma 7 · TypeORM · MikroORM. MongoDB: Mongoose            | `--orm drizzle\|prisma\|typeorm\|mikroorm\|mongoose`  |
-| Auth style         | Hand-rolled `@nestjs/jwt` + argon2id · official `@nestjs/authentication` (scrypt) | `--auth jwt\|nest`                                    |
-| Validation library | Zod · class-validator · Valibot · ArkType                                         | `--validation zod\|class-validator\|valibot\|arktype` |
-| Email verification | on · off                                                                          | `--[no-]email-verification`                           |
-| CSRF protection    | on · off                                                                          | `--[no-]csrf`                                         |
-| Package manager    | `--pm`, else asked among the installed ones (pnpm first); npm with `--yes`        | `--pm pnpm\|npm\|yarn\|bun`                           |
-| Install            | yes · no                                                                          | `--no-install`                                        |
-| Git repository     | yes · no                                                                          | `--no-git`                                            |
+| Option              | Choices (default first)                                                           | Flag                                                  |
+| ------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Project folder      | `nest-api`, created in the current folder; `.` uses the current folder itself     | positional `[dir]`                                    |
+| Package name        | the folder's name; asked when that isn't a valid npm package name                 | `--name <package-name>`                               |
+| Project type        | API only · API + web (a Nuxt front end in `web/`, run with bun)                   | `--type api\|fullstack`                               |
+| HTTP platform       | Fastify · Express · Node (native `node:http`)                                     | `--platform fastify\|express\|node`                   |
+| Database            | PostgreSQL · MongoDB                                                              | `--db postgres\|mongodb`                              |
+| ORM / ODM           | PostgreSQL: Drizzle · Prisma 7 · TypeORM · MikroORM. MongoDB: Mongoose            | `--orm drizzle\|prisma\|typeorm\|mikroorm\|mongoose`  |
+| Auth style          | Hand-rolled `@nestjs/jwt` + argon2id · official `@nestjs/authentication` (scrypt) | `--auth jwt\|nest`                                    |
+| Validation library  | Zod · class-validator · Valibot · ArkType                                         | `--validation zod\|class-validator\|valibot\|arktype` |
+| Application pattern | Controller + service · CQRS (`@nestjs/cqrs`)                                      | `--pattern service\|cqrs`                             |
+| Email verification  | on · off                                                                          | `--[no-]email-verification`                           |
+| CSRF protection     | on · off                                                                          | `--[no-]csrf`                                         |
+| Package manager     | `--pm`, else asked among the installed ones (pnpm first); npm with `--yes`        | `--pm pnpm\|npm\|yarn\|bun`                           |
+| Dev environment     | Local Node.js (databases in Docker) · Docker (the API in a container too)         | `--dev-env local\|docker`                             |
+| Install             | yes · no                                                                          | `--no-install`                                        |
+| Git repository      | yes · no                                                                          | `--no-git`                                            |
 
 MongoDB works only with Mongoose; the SQL ORMs only with PostgreSQL. Any option given as a flag is
 not asked for, and `--yes` takes the defaults for the rest:

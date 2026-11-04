@@ -9,17 +9,21 @@ Arguments:
 Options:
   --name <package-name>                     npm package name (default: the folder's name; asked if that
                                             isn't a valid package name)
-  --platform <fastify|express>              HTTP platform (default: fastify)
+  --type <api|fullstack>                    API only, or API + a Nuxt front end in web/ (default: api)
+  --platform <fastify|express|node>         HTTP platform (default: fastify)
   --db <postgres|mongodb>                   Database (default: postgres)
   --orm <drizzle|prisma|typeorm|mikroorm|mongoose>
                                             ORM / ODM (default: drizzle, or mongoose for MongoDB)
   --auth <jwt|nest>                         Hand-rolled JWT or official @nestjs/authentication (default: jwt)
   --validation <zod|class-validator|valibot|arktype>
                                             Validation library (default: zod)
+  --pattern <service|cqrs>                  Controller + service, or CQRS with @nestjs/cqrs (default: service)
   --[no-]email-verification                 Require email verification (default: on)
   --[no-]csrf                               CSRF protection (default: on)
   --pm <pnpm|npm|yarn|bun>                  Package manager (default: the one running this command;
                                             otherwise asked, or npm with --yes)
+  --dev-env <local|docker>                  Run the API on your Node.js or in Docker during development
+                                            (default: local; the databases run in Docker either way)
   --no-install                              Don't install dependencies
   --no-git                                  Don't initialize a git repository
   -y, --yes                                 Use defaults for everything not given; don't prompt
