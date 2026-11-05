@@ -8,10 +8,6 @@ on:
         description: pr (20 combos, pairwise) or all (240)
         type: string
         required: true
-      only:
-        description: Glob on the combo ids, e.g. '*-cqrs'. GitHub runs at most 256 jobs per matrix.
-        type: string
-        default: '*'
 
 permissions:
   contents: read
@@ -26,10 +22,9 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
       - id: list
-        run: echo "ids=$(node scripts/matrix.ts --list --subset "$SUBSET" --only "$ONLY")" >> "$GITHUB_OUTPUT"
+        run: echo "ids=$(node scripts/matrix.ts --list --subset "$SUBSET")" >> "$GITHUB_OUTPUT"
         env:
           SUBSET: ${{ inputs.subset }}
-          ONLY: ${{ inputs.only }}
 
   combo:
     name: ${{ matrix.combo }}

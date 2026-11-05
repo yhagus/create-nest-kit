@@ -170,7 +170,7 @@ This repository is a pnpm workspace:
 | `scripts/pack-release.ts`   | packs the release archive and its checksum into `release/` |
 | `docs/layers.md`            | how layers, slots and manifests work                       |
 | `docs/contract.md`          | the HTTP contract every generated project serves           |
-| `.github/workflows/`        | CI, the nightly matrix and the release                     |
+| `.github/workflows/`        | CI and the release                                         |
 
 ```sh
 pnpm install
@@ -217,9 +217,8 @@ pnpm matrix --only 'fastify-postgres-drizzle-jwt-zod-service' --steps install,ty
 node scripts/matrix.ts --list --subset pr  # print the selected ids as JSON
 ```
 
-CI runs the PR subset on every push and pull request, one job per combo; the nightly workflow runs
-all 240, in one matrix per pattern (GitHub runs at most 256 jobs per matrix), and uploads the logs
-of failed combos as artifacts.
+CI runs the PR subset on every push to `main`, one job per combo, and uploads the logs of failed
+combos as artifacts. All 240 run only locally, with `pnpm matrix`; it takes hours.
 
 ### Smoke tests
 
@@ -233,7 +232,7 @@ node scripts/smoke.ts dev --type fullstack          # --dev-env docker's contain
 ```
 
 `SMOKE_PORT` changes the API's port (default 3000) and `SMOKE_DIR` where the project goes. CI runs six
-scenarios on every push; together the image ones cover every ORM and package manager.
+scenarios on every push to `main`; together the image ones cover every ORM and package manager.
 
 ### The installer
 

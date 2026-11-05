@@ -185,7 +185,7 @@ const PLATFORM_AUTH_PAIRS = AUTH_STYLES.flatMap((auth) =>
 );
 
 /**
- * The 20 combos CI runs on pull requests: a pairwise covering array, so every pair of values
+ * The 20 combos CI runs on every push to main: a pairwise covering array, so every pair of values
  * from any two of platform, ORM, auth, validation and pattern runs at least once.
  *
  * Each (orm, validation) pair runs once, and 20 is the minimum for that. The (platform, auth)
