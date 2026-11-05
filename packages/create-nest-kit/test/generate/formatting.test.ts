@@ -20,6 +20,9 @@ const PROJECT_IGNORE_PATHS = ['_gitignore', '_prettierignore'].map((name) =>
 );
 const REPO_CONFIG_PATH = fileURLToPath(new URL('../../../../.prettierrc', import.meta.url));
 
+/** Composing every combo takes longer than vitest's 5s default, and grows with each new choice. */
+const ALL_COMBOS_TIMEOUT_MS = 30_000;
+
 interface ProjectFile {
   /** Path inside the generated project. */
   target: string;
@@ -71,21 +74,25 @@ describe('formatting of generated projects', () => {
     expect(unformatted.map((file) => `${file.layerId}: ${file.target}`)).toEqual([]);
   });
 
-  it('renders prettier-clean files for every ready combo', async () => {
-    const readyCombos = listCombos().filter((combo) =>
-      isComboReady(combo, BUILT_IN_LAYER_SET.layers),
-    );
+  it(
+    'renders prettier-clean files for every ready combo',
+    async () => {
+      const readyCombos = listCombos().filter((combo) =>
+        isComboReady(combo, BUILT_IN_LAYER_SET.layers),
+      );
 
-    const unformattedPerCombo = await Promise.all(
-      readyCombos.map(async (combo) => {
-        const plan = await composeProject(optionsForCombo(combo), BUILT_IN_LAYER_SET);
-        const unformatted = await unformattedFiles(plan.renderedFiles);
-        return unformatted.map((file) => `${combo.id}: ${file.target}`);
-      }),
-    );
+      const unformattedPerCombo = await Promise.all(
+        readyCombos.map(async (combo) => {
+          const plan = await composeProject(optionsForCombo(combo), BUILT_IN_LAYER_SET);
+          const unformatted = await unformattedFiles(plan.renderedFiles);
+          return unformatted.map((file) => `${combo.id}: ${file.target}`);
+        }),
+      );
 
-    expect(unformattedPerCombo.flat()).toEqual([]);
-  });
+      expect(unformattedPerCombo.flat()).toEqual([]);
+    },
+    ALL_COMBOS_TIMEOUT_MS,
+  );
 
   // The repo's own `pnpm format` (and editors, which find no config named `_prettierrc`) format
   // the templates with the root config, so it must not drift from the one projects get.

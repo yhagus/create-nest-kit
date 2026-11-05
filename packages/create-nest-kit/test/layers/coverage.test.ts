@@ -10,6 +10,9 @@ import {
   type ProjectType,
 } from '../../src/options.ts';
 
+/** Composing every combo takes longer than vitest's 5s default, and grows with each new choice. */
+const ALL_COMBOS_TIMEOUT_MS = 30_000;
+
 /** Composes each combo and returns `<id>: <error>` for every one that fails. */
 async function compositionFailures(combos: readonly Combo[]): Promise<string[]> {
   const results = await Promise.all(
@@ -32,13 +35,17 @@ async function webFiles(projectType: ProjectType) {
 
 describe('built-in layer coverage', () => {
   // Combos with a planned layer are skipped; each one is covered as soon as its layers are ready.
-  it('composes every combo whose layers are all ready, without collisions, conflicts or unfilled slots', async () => {
-    const readyCombos = listCombos().filter((combo) =>
-      isComboReady(combo, BUILT_IN_LAYER_SET.layers),
-    );
+  it(
+    'composes every combo whose layers are all ready, without collisions, conflicts or unfilled slots',
+    async () => {
+      const readyCombos = listCombos().filter((combo) =>
+        isComboReady(combo, BUILT_IN_LAYER_SET.layers),
+      );
 
-    expect(await compositionFailures(readyCombos)).toEqual([]);
-  });
+      expect(await compositionFailures(readyCombos)).toEqual([]);
+    },
+    ALL_COMBOS_TIMEOUT_MS,
+  );
 
   it('adds the front end to an API + web project, and only there', async () => {
     expect(await webFiles('api')).toEqual([]);
