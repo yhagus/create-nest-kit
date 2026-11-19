@@ -11,7 +11,7 @@ const DOCS_PATH = 'docs';
 const CORS_METHODS = ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'];
 
 /**
- * The HTTP pipeline, shared by every platform and by the e2e harness.
+ * The HTTP pipeline, shared by every platform and by the test harness.
  * The order matters where noted.
  */
 export function configureApp(app: INestApplication): void {

@@ -50,8 +50,7 @@ export class UnknownRoleIdsException extends BadRequestException {
 
 /**
  * Where users and their role assignments are stored. Emails arrive normalized.
- * The persistence layer binds the implementation in `src/database/database.module.ts`;
- * `test/contracts/users-repository.contract.ts` is its spec.
+ * The persistence layer binds the implementation in `src/database/database.module.ts`.
  */
 export abstract class UsersRepository {
   abstract findById(id: string): Promise<User | null>;

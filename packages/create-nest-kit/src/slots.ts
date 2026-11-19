@@ -4,11 +4,10 @@
  * Add a path here when code starts importing a new variant file from another layer.
  */
 export const REQUIRED_SLOTS: readonly string[] = [
-  // layout/*: base's tsconfig.build.json extends tsconfig.json; its scripts run the other three
+  // layout/*: base's tsconfig.build.json extends tsconfig.json; its scripts run the other two
   'tsconfig.json',
   'nest-cli.json',
   'vitest.config.ts',
-  'vitest.config.e2e.ts',
   // platform/*
   'src/bootstrap/create-app.ts',
   // database/*
@@ -32,7 +31,8 @@ export const REQUIRED_SLOTS: readonly string[] = [
   'src/database/auth-persistence.module.ts',
   // pattern/<pattern>/auth-<auth>, spread into that auth style's auth.module.ts
   'src/auth/auth-flows.ts',
-  // database/* or persistence/<orm>/core
-  'test/support/database.global-setup.ts',
-  'test/support/reset-database.ts',
+  // database/*: starts the database container for the tests
+  'tests/support/database.global-setup.ts',
+  // persistence/<orm>/core: empties the database between tests
+  'tests/support/reset-database.ts',
 ];

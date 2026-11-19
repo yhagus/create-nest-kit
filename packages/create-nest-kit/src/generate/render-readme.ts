@@ -74,7 +74,7 @@ The API runs in the \`${service}\` container. On every start it installs depende
 
 - Inside the container, the services are reached by name: \`docker-compose.yml\` overrides the URLs that \`.env\` points at \`localhost\`, which is still what tools on your machine use.
 - Run other scripts there: \`docker compose exec ${service} npm run <script>\`. After changing dependencies, \`docker compose restart ${service}\`.
-- The install on your machine is for your editor and the tests: run \`${runScriptCommand(options.packageManager, 'test')}\` and \`${runScriptCommand(options.packageManager, 'test:e2e')}\` there, since the e2e tests start their own containers.
+- The install on your machine is for your editor and the tests: run \`${runScriptCommand(options.packageManager, 'test')}\` there, since the tests start their own containers.
 `.trim();
 }
 

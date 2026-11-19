@@ -9,8 +9,7 @@ export type NewSession = Pick<
 /**
  * Where sessions are stored. Every method is a single atomic statement (a conditional
  * UPDATE/DELETE), so concurrent refreshes and revocations can't interleave badly.
- * The persistence layer binds the implementation in `src/database/database.module.ts`;
- * `test/contracts/sessions-repository.contract.ts` is its spec.
+ * The persistence layer binds the implementation in `src/database/database.module.ts`.
  */
 export abstract class SessionsRepository {
   abstract create(session: NewSession): Promise<Session>;

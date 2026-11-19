@@ -1,5 +1,5 @@
-// Generates each combo into <matrix dir>/<id> and runs install, typecheck, lint, format:check, test and
-// test:e2e in it.
+// Generates each combo into <matrix dir>/<id> and runs install, typecheck, build, lint, format:check
+// and test in it.
 // Run with `pnpm matrix [--only <glob>] [--subset pr|all] [--steps a,b] [--keep]` (builds the CLI first).
 // `--list` prints the ids of the ready selected combos as a JSON array instead; CI builds its job matrix from it.
 import { spawn } from 'node:child_process';

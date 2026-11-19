@@ -4,7 +4,7 @@ import { frozenInstallCommand, runScriptCommand } from '../package-manager.ts';
 import { WEB_DIRECTORY } from './quickstart.ts';
 
 const NODE_VERSION = 24;
-const CHECK_SCRIPTS = ['lint', 'format:check', 'typecheck', 'test', 'test:e2e'];
+const CHECK_SCRIPTS = ['lint', 'format:check', 'typecheck', 'test'];
 
 export function renderCiWorkflow(options: ProjectOptions): string {
   const packageManager = options.packageManager;

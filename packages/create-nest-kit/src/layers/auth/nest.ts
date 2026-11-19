@@ -26,7 +26,7 @@ export const nestAuthLayer: LayerManifest = {
 - Refresh tokens are opaque and single use; each refresh rotates them, and presenting a rotated one revokes the session. Each token row records its session (\`auth_refresh_tokens.session_id\`), so revoking a session revokes its tokens.
 - Device sessions live in \`sessions\`, as in every auth style. The package's own cookie-session table (\`auth_sessions\`) stays empty: password reset needs it to exist.
 - Authorization is deny by default (\`@nestjs/authorization\`): \`@Authenticated()\` is \`@Can.Anyone()\`, and \`@RequirePermissions(...)\` is \`@Can(PermissionPolicy, 'has', ...)\` (\`${projectPath('src/auth/permission.policy.ts', options)}\`).
-- The stores are registered in \`src/database/auth-persistence.module.ts\`; \`test/contracts/\` holds their spec.
+- The stores are registered in \`src/database/auth-persistence.module.ts\`.
 `,
     },
   ],

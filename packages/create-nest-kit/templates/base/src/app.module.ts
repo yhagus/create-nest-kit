@@ -1,5 +1,4 @@
 import { type DynamicModule, Module, type ModuleMetadata } from '@nestjs/common';
-import type { MailTransport } from '@nestjs/mail';
 import { AuthModule } from './auth/auth.module.js';
 import { ConfigModule } from './config/config.module.js';
 import type { Env } from './config/env.js';
@@ -14,9 +13,7 @@ import { FeaturesModule } from './modules/features.module.js';
 
 export interface AppModuleOptions {
   env: Env;
-  /** Replaces the transport MAIL_TRANSPORT selects. The e2e harness passes an InMemoryMailTransport. */
-  mailTransport?: MailTransport;
-  /** Modules mounted next to the app's own. The e2e suite adds test-only controllers this way. */
+  /** Modules mounted next to the app's own. The feature tests add test-only controllers this way. */
   extraImports?: ModuleMetadata['imports'];
 }
 
@@ -26,7 +23,7 @@ export interface AppModuleOptions {
  */
 @Module({})
 export class AppModule {
-  static forRoot({ env, mailTransport, extraImports = [] }: AppModuleOptions): DynamicModule {
+  static forRoot({ env, extraImports = [] }: AppModuleOptions): DynamicModule {
     return {
       module: AppModule,
       imports: [
@@ -35,7 +32,7 @@ export class AppModule {
         RedisModule,
         DatabaseModule,
         QueueModule,
-        MailModule.forRoot({ transport: mailTransport }),
+        MailModule,
         ThrottlerModule,
         AuthModule,
         FeaturesModule,

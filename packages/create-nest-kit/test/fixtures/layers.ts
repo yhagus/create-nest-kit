@@ -20,7 +20,6 @@ export const fixtureLayers: LayerManifest[] = [
       lint: 'oxlint',
       typecheck: 'tsc --noEmit',
       test: 'vitest run',
-      'test:e2e': 'vitest run --config vitest.e2e.config.ts',
     },
     env: [
       { key: 'PORT', value: '3000', comment: 'HTTP port' },

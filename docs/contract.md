@@ -2,7 +2,7 @@
 
 Every generated project serves exactly this contract, whatever the platform, database, ORM, auth style and
 validation library.
-The e2e suite in `templates/base/test/e2e/` is the executable form of this document. When the two disagree,
+The feature tests in `templates/base/tests/` are the executable form of this document. When the two disagree,
 fix one of them in the same change.
 
 ## Conventions

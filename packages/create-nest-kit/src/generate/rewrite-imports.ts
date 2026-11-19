@@ -32,11 +32,11 @@ const SOURCE_EXTENSION = '.ts';
 /** The alias the flat layout's `tsconfig.json` maps to `src/`. */
 const SOURCE_ALIAS = '@/';
 const SOURCE_DIR = 'src';
-const TEST_DIR = 'test';
+const TEST_DIR = 'tests';
 
 /**
  * How an import names the file it imports: always by relative path, or by the `@/` alias when it
- * leaves its own module (a top-level folder of `src/`, or `test/`). A file directly in `src/`
+ * leaves its own module (a top-level folder of `src/`, or `tests/`). A file directly in `src/`
  * belongs to no module, so every import from it uses the alias.
  */
 export type ImportStyle = 'relative' | 'alias-across-modules';
@@ -107,7 +107,7 @@ export function rewriteRelativeImports(
 }
 
 /**
- * The module a project file belongs to, for the `@/` rule: `src/<folder>`, `test`, or the file
+ * The module a project file belongs to, for the `@/` rule: `src/<folder>`, `tests`, or the file
  * itself when it sits directly in `src/`.
  */
 function moduleOf(projectFilePath: string): string {

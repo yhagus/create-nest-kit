@@ -235,13 +235,13 @@ describe('renderCiWorkflow', () => {
   });
 
   it.each([
-    ['npm', 'npm ci', 'npm run test:e2e'],
-    ['pnpm', 'pnpm install --frozen-lockfile', 'pnpm test:e2e'],
-    ['yarn', 'yarn install --frozen-lockfile', 'yarn test:e2e'],
-    ['bun', 'bun install --frozen-lockfile', 'bun run test:e2e'],
+    ['npm', 'npm ci', 'npm run test'],
+    ['pnpm', 'pnpm install --frozen-lockfile', 'pnpm test'],
+    ['yarn', 'yarn install --frozen-lockfile', 'yarn test'],
+    ['bun', 'bun install --frozen-lockfile', 'bun run test'],
   ] as const)(
     'installs and runs the checks with %s',
-    (packageManager, expectedInstall, expectedE2e) => {
+    (packageManager, expectedInstall, expectedTest) => {
       const { options } = fixtureProject({ packageManager });
 
       const workflow: unknown = parseYaml(renderCiWorkflow(options));
@@ -249,7 +249,7 @@ describe('renderCiWorkflow', () => {
       expect(workflow).toMatchObject({
         jobs: {
           check: {
-            steps: expect.arrayContaining([{ run: expectedInstall }, { run: expectedE2e }]),
+            steps: expect.arrayContaining([{ run: expectedInstall }, { run: expectedTest }]),
           },
         },
       });

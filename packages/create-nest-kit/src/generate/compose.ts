@@ -21,7 +21,7 @@ export interface TemplateFile {
 }
 
 /** Source and test files, whose relative imports follow the files they import. */
-const IMPORTING_FILE = /^(src|test)\/.*\.ts$/;
+const IMPORTING_FILE = /^(src|tests)\/.*\.ts$/;
 
 /**
  * Folders a tool fills after generation (the Prisma client, by `prisma generate`). Imports into

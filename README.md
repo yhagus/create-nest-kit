@@ -40,7 +40,7 @@ The generated project's own README has the exact commands for the package manage
 
 - **One contract, many stacks.** 480 combos of platform, ORM, auth style, validation library, pattern and layout all serve the endpoints, payloads and error codes in [docs/contract.md](docs/contract.md). Swapping a stack choice never changes what your clients see.
 - **The boring parts, done properly.** Refresh-token rotation with reuse detection, sessions you can revoke instantly, deny-by-default permissions, CSRF, rate limiting and queued mail come wired and tested.
-- **Tested in every combo.** Each generated project ships unit tests, contract suites for its storage and an e2e suite against real databases. Every release generates all 480 combos and runs their checks before it is published.
+- **Tested in every combo.** Each generated project ships feature tests that drive the app over HTTP, its scripts and its start-up, against real databases, Redis and Mailpit. Every release generates all 480 combos and runs their checks before it is published.
 - **No lock-in to the generator.** The output is a plain NestJS project with no runtime dependency on create-nest-kit. Generate it once and own it.
 
 ---
@@ -52,10 +52,10 @@ The generated project's own README has the exact commands for the package manage
 - **Users, roles and sessions:** list your sessions, revoke one or all others; revoked access tokens stop working immediately.
 - **Security:** CSRF protection (toggle), security headers, CORS, Redis-backed rate limiting.
 - **Infrastructure:** BullMQ queues, mail through a queue (Mailpit in development), pino logging with request ids, health checks at `/health`, Swagger UI at `/docs`, an env schema validated at startup.
-- **Tests:** unit tests against in-memory fakes, contract suites for every repository, and an e2e suite that runs against real Postgres or MongoDB and Redis (Testcontainers).
+- **Tests:** feature tests in `tests/<feature>/`, which call the API, run `db:migrate` and `db:seed` and boot the app against real Postgres or MongoDB, Redis and Mailpit (Testcontainers), asserting only what a client can observe.
 - **Tooling:** TypeScript 6, Vitest, oxlint, Prettier, `docker-compose.yml`, a `Dockerfile` and a GitHub Actions CI workflow.
 
-The e2e suite in every generated project is the executable form of [docs/contract.md](docs/contract.md).
+The feature tests in every generated project are the executable form of [docs/contract.md](docs/contract.md).
 
 ---
 
@@ -66,7 +66,7 @@ The e2e suite in every generated project is the executable form of [docs/contrac
 - Node.js 24.15 or later. The installer stops with a hint when it is missing or older; install it from [nodejs.org](https://nodejs.org) or with `fnm install 24` / `nvm install 24`.
 - `curl` or `wget`, `tar`, and one of `sha256sum`, `shasum` or `openssl` (present on macOS and most Linux distributions).
 - npm, pnpm, yarn or bun, to install the generated project's dependencies.
-- Docker, to run the generated project (`docker compose up`, `test:e2e`). git is optional; without it the CLI skips `git init`.
+- Docker, to run the generated project (`docker compose up`, `test`). git is optional; without it the CLI skips `git init`.
 
 **Windows:** run the installer inside [WSL](https://learn.microsoft.com/windows/wsl/install). There is no PowerShell installer yet.
 
@@ -211,7 +211,7 @@ Templates are written once, in the nested service layout; relocation maps each f
 
 ### The matrix
 
-`pnpm matrix` builds the CLI, then for each combo generates a project outside the repo and runs `install`, `typecheck`, `build`, `lint`, `format:check`, `test` and `test:e2e` in it (Docker must be running). It prints a pass/fail table and keeps the logs and failed projects in `$MATRIX_DIR` (default: `<os tmpdir>/create-nest-kit-matrix`).
+`pnpm matrix` builds the CLI, then for each combo generates a project outside the repo and runs `install`, `typecheck`, `build`, `lint`, `format:check` and `test` in it (Docker must be running). It prints a pass/fail table and keeps the logs and failed projects in `$MATRIX_DIR` (default: `<os tmpdir>/create-nest-kit-matrix`).
 
 ```sh
 pnpm matrix --subset pr                  # 20 combos: every pair of option values at least once (pairwise)

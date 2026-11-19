@@ -21,7 +21,7 @@ describe('parseMatrixArgs', () => {
     expect(parseMatrixArgs([])).toEqual({
       only: undefined,
       subset: 'all',
-      steps: ['install', 'typecheck', 'build', 'lint', 'format:check', 'test', 'test:e2e'],
+      steps: ['install', 'typecheck', 'build', 'lint', 'format:check', 'test'],
       keep: false,
       list: false,
     });
@@ -43,7 +43,7 @@ describe('parseMatrixArgs', () => {
 
   it('rejects an unknown step', () => {
     expect(() => parseMatrixArgs(['--steps', 'install,deploy'])).toThrow(
-      '--steps must be one of install, typecheck, build, lint, format:check, test, test:e2e (got "deploy")',
+      '--steps must be one of install, typecheck, build, lint, format:check, test (got "deploy")',
     );
   });
 });

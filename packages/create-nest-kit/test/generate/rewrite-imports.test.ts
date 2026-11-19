@@ -116,8 +116,8 @@ const FLAT_PROJECT_PATH_BY_TEMPLATE_PATH = new Map([
   ['src/common/error-code.ts', 'src/libs/error-code.ts'],
   ['src/app.module.ts', 'src/app.module.ts'],
   ['src/config/env.ts', 'src/config/env.ts'],
-  ['test/support/app.ts', 'test/support/app.ts'],
-  ['test/fakes/in-memory-store.ts', 'test/fakes/in-memory-store.ts'],
+  ['tests/users/list.test.ts', 'tests/users/list.test.ts'],
+  ['tests/support/http.ts', 'tests/support/http.ts'],
 ]);
 const flatProjectPathOf = (templatePath: string) =>
   FLAT_PROJECT_PATH_BY_TEMPLATE_PATH.get(templatePath);
@@ -178,13 +178,13 @@ describe('rewriteRelativeImports with the @/ alias across modules', () => {
   it('imports src/ from the tests through @/, and other test files relatively', () => {
     const content = [
       "import { env } from '../../src/config/env.js';",
-      "import { InMemoryStore } from '../fakes/in-memory-store.js';",
+      "import { request } from '../support/http.js';",
       '',
     ].join('\n');
 
     const rewritten = rewriteRelativeImports(
       content,
-      { templatePath: 'test/support/app.ts', projectPath: 'test/support/app.ts' },
+      { templatePath: 'tests/users/list.test.ts', projectPath: 'tests/users/list.test.ts' },
       flatProjectPathOf,
       'alias-across-modules',
     );
@@ -192,7 +192,7 @@ describe('rewriteRelativeImports with the @/ alias across modules', () => {
     expect(rewritten).toBe(
       [
         "import { env } from '@/config/env.js';",
-        "import { InMemoryStore } from '../fakes/in-memory-store.js';",
+        "import { request } from '../support/http.js';",
         '',
       ].join('\n'),
     );

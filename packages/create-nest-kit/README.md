@@ -35,10 +35,10 @@ curl -fsSL $INSTALL | sh -s -- .             # uses ~/code/apps itself (asks fir
 Generated projects include authentication with refresh-token rotation, email verification,
 password reset and change, roles and permissions, session management with immediate revocation,
 CSRF protection, rate limiting, BullMQ queues, queued mail (Mailpit in development), pino logging,
-health checks, Swagger UI, unit, contract and e2e tests (Testcontainers), `docker-compose.yml`, a
+health checks, Swagger UI, feature tests against real containers (Testcontainers), `docker-compose.yml`, a
 `Dockerfile` and a GitHub Actions workflow.
 
-Requires Node.js ≥ 24.15. The generated project's e2e tests need Docker.
+Requires Node.js ≥ 24.15. The generated project's tests need Docker.
 
 ## Options
 

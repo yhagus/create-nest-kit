@@ -13,8 +13,8 @@ export const MATRIX_STEPS = [
   'build',
   'lint',
   'format:check',
+  // The feature tests, against database, Redis and Mailpit containers (needs Docker).
   'test',
-  'test:e2e',
 ] as const;
 export type MatrixStep = (typeof MATRIX_STEPS)[number];
 

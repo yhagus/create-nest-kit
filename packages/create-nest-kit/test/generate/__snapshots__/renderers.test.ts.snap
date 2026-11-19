@@ -22,7 +22,6 @@ jobs:
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test
-      - run: pnpm test:e2e
 "
 `;
 
@@ -74,7 +73,6 @@ exports[`renderPackageJson > matches the snapshot 1`] = `
     "lint": "oxlint",
     "start:dev": "nest start --watch",
     "test": "vitest run",
-    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -132,16 +130,15 @@ Mail sent in development is caught by Mailpit: http://localhost:8025
 
 ## Scripts
 
-| Command           | Runs                                       |
-| ----------------- | ------------------------------------------ |
-| \`pnpm build\`      | \`nest build\`                               |
-| \`pnpm db:migrate\` | \`drizzle-kit migrate\`                      |
-| \`pnpm db:seed\`    | \`node src/database/seed.ts\`                |
-| \`pnpm lint\`       | \`oxlint\`                                   |
-| \`pnpm start:dev\`  | \`nest start --watch\`                       |
-| \`pnpm test\`       | \`vitest run\`                               |
-| \`pnpm test:e2e\`   | \`vitest run --config vitest.e2e.config.ts\` |
-| \`pnpm typecheck\`  | \`tsc --noEmit\`                             |
+| Command           | Runs                        |
+| ----------------- | --------------------------- |
+| \`pnpm build\`      | \`nest build\`                |
+| \`pnpm db:migrate\` | \`drizzle-kit migrate\`       |
+| \`pnpm db:seed\`    | \`node src/database/seed.ts\` |
+| \`pnpm lint\`       | \`oxlint\`                    |
+| \`pnpm start:dev\`  | \`nest start --watch\`        |
+| \`pnpm test\`       | \`vitest run\`                |
+| \`pnpm typecheck\`  | \`tsc --noEmit\`              |
 
 ## Architecture
 

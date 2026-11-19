@@ -30,12 +30,6 @@ describe('projectPath in a CQRS project', () => {
     );
   });
 
-  it('puts a spec next to its subject', () => {
-    expect(projectPath('src/modules/users/user.spec.ts', cqrs)).toBe(
-      'src/modules/users/models/user.spec.ts',
-    );
-  });
-
   it('leaves modules, controllers and files already in a folder at their place', () => {
     expect(projectPath('src/auth/auth-http.module.ts', cqrs)).toBe('src/auth/auth-http.module.ts');
     expect(projectPath('src/modules/roles/roles.controller.ts', cqrs)).toBe(
@@ -51,9 +45,7 @@ describe('projectPath in a CQRS project', () => {
       'src/modules/features.module.ts',
     );
     expect(projectPath('src/common/error-code.ts', cqrs)).toBe('src/common/error-code.ts');
-    expect(projectPath('test/fakes/in-memory-store.ts', cqrs)).toBe(
-      'test/fakes/in-memory-store.ts',
-    );
+    expect(projectPath('tests/support/http.ts', cqrs)).toBe('tests/support/http.ts');
   });
 
   it('refuses a feature-module file that has no role folder yet', () => {
@@ -97,9 +89,7 @@ describe('projectPath in a flat project', () => {
     expect(projectPath('src/database/database.module.ts', flatService)).toBe(
       'src/database/database.module.ts',
     );
-    expect(projectPath('test/fakes/in-memory-store.ts', flatService)).toBe(
-      'test/fakes/in-memory-store.ts',
-    );
+    expect(projectPath('tests/support/http.ts', flatService)).toBe('tests/support/http.ts');
   });
 
   it('keeps the role folders of a CQRS project', () => {

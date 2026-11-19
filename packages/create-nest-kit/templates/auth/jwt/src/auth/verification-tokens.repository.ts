@@ -16,9 +16,8 @@ export interface NewVerificationToken {
 
 /**
  * One-time email-verification and password-reset tokens, stored as hashes. Bound by the
- * persistence layer in `src/database/auth-persistence.module.ts`;
- * `test/contracts/verification-tokens-repository.contract.ts` is its spec. Tokens go when
- * their user is deleted.
+ * persistence layer in `src/database/auth-persistence.module.ts`. Tokens go when their user is
+ * deleted.
  */
 export abstract class VerificationTokensRepository {
   /** Stores a token and, atomically, deletes the user's earlier tokens of the same purpose. */

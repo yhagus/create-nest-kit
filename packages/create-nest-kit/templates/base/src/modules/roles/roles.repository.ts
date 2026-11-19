@@ -15,7 +15,7 @@ export class RoleNameTakenException extends ConflictException {
 
 /**
  * Where roles are stored. The persistence layer binds the implementation in
- * `src/database/database.module.ts`; `test/contracts/roles-repository.contract.ts` is its spec.
+ * `src/database/database.module.ts`.
  */
 export abstract class RolesRepository {
   /** Every role, ordered by name. */

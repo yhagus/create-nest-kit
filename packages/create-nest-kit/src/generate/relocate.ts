@@ -15,7 +15,7 @@ export type RoleFolder = 'decorators' | 'guards' | 'models' | 'providers' | 'sch
  * The role folder of every file the layers put at a feature-module root, keyed by file name
  * (names are unique across modules). Classified by reading each file: an injectable, or a port
  * bound to one, goes to `providers/`; types, views, exceptions and pure helpers to `models/`;
- * validation DTOs to `schemas/`. A spec goes wherever its subject goes.
+ * validation DTOs to `schemas/`.
  */
 const ROLE_FOLDER_BY_FILE_NAME: Readonly<Record<string, RoleFolder>> = {
   // src/auth (base, auth/jwt, auth/nest, pattern/cqrs/auth-*, validation/*)
@@ -79,8 +79,6 @@ const ROLE_FOLDER_BY_FILE_NAME: Readonly<Record<string, RoleFolder>> = {
 /** The only files that stay at a feature-module root in the CQRS layout. */
 const MODULE_ROOT_FILE = /\.(module|controller)\.ts$/;
 
-const SPEC_SUFFIX = '.spec.ts';
-
 /**
  * In the CQRS layout, a feature module keeps only its module and controllers at its root; every
  * other file moves into a role folder. `commands/` and `queries/` are laid out in the templates.
@@ -92,7 +90,7 @@ export const cqrsRoleFolders: Relocation = (filePath, options) => {
 
   const fileName = path.posix.basename(filePath);
   if (MODULE_ROOT_FILE.test(fileName)) return filePath;
-  const roleFolder = ROLE_FOLDER_BY_FILE_NAME[subjectOf(fileName)];
+  const roleFolder = ROLE_FOLDER_BY_FILE_NAME[fileName];
   if (roleFolder === undefined) {
     throw new Error(
       `${filePath} has no role folder for the CQRS layout: add it to ROLE_FOLDER_BY_FILE_NAME in src/generate/relocate.ts`,
@@ -110,11 +108,6 @@ function featureModuleDirOf(filePath: string): string | undefined {
     segments.length === 4 && segments[0] === 'src' && segments[1] === 'modules';
   if (!isInAuth && !isInFeatureModule) return undefined;
   return segments.slice(0, -1).join('/');
-}
-
-/** `user.spec.ts` → `user.ts`: a spec sits next to its subject. */
-function subjectOf(fileName: string): string {
-  return fileName.endsWith(SPEC_SUFFIX) ? `${fileName.slice(0, -SPEC_SUFFIX.length)}.ts` : fileName;
 }
 
 /**

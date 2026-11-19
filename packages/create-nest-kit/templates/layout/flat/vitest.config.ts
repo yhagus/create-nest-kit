@@ -7,6 +7,12 @@ export default defineConfig({
   // `@/` imports, mapped to src/ by `paths` in tsconfig.json.
   resolve: { tsconfigPaths: true },
   test: {
-    include: ['src/**/*.spec.ts', 'test/**/*.spec.ts'],
+    include: ['tests/**/*.test.ts'],
+    // Starts the database, Redis and Mailpit containers and migrates the database.
+    globalSetup: ['tests/support/global-setup.ts'],
+    // Test files share one database, one Redis and one mailbox, so they run one at a time.
+    fileParallelism: false,
+    hookTimeout: 60_000,
+    testTimeout: 15_000,
   },
 });

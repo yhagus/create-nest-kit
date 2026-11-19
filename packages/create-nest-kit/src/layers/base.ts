@@ -12,12 +12,6 @@ const MODULE_LOGIC_BY_PATTERN: Record<Pattern, string> = {
   cqrs: 'command and query handlers (`commands/`, `queries/`)',
 };
 
-/** How that logic is unit-tested, in each application pattern. */
-const UNIT_TESTS_BY_PATTERN: Record<Pattern, string> = {
-  service: 'Services are unit-tested against the in-memory repositories in `test/fakes/`.',
-  cqrs: 'Command and query handlers are unit-tested through the buses, against the in-memory repositories in `test/fakes/`; `handlerTestingModule()` in `test/support/handler-testing-module.ts` wires them.',
-};
-
 /** Where the feature modules live, in each layout. */
 const FEATURE_MODULE_FOLDERS_BY_LAYOUT: Record<Layout, string> = {
   nested: '`src/modules/`',
@@ -82,14 +76,13 @@ export const baseLayer: LayerManifest = {
     'start:dev': 'nest start --watch',
     'start:debug': 'nest start --debug --watch',
     'start:prod': 'node dist/main.js',
-    lint: 'oxlint src test',
+    lint: 'oxlint src tests',
     typecheck: 'tsc --noEmit',
     format: 'prettier --write .',
     'format:check': 'prettier --check .',
     test: 'vitest run',
     'test:watch': 'vitest',
     'test:cov': 'vitest run --coverage',
-    'test:e2e': 'vitest run --config vitest.config.e2e.ts',
     // Through the Nest CLI (tsc), not tsx: esbuild doesn't emit the decorator metadata DI needs.
     'db:seed': 'nest start --entryFile seed/seed',
   },
@@ -209,7 +202,7 @@ export const baseLayer: LayerManifest = {
 - ${INFRASTRUCTURE_FOLDERS_BY_LAYOUT[options.layout]}: logger, Redis, queues, mail, rate limiting, health checks
 - \`src/database/\`: database module and schema
 - \`src/auth/\`: authentication and authorization
-- \`test/\`: e2e and integration tests, and the harness in \`test/support/\`
+- \`tests/\`: feature tests, one folder per feature, and the harness in \`tests/support/\`
 ${IMPORT_RULE_BY_LAYOUT[options.layout]}`,
     },
     {
@@ -235,11 +228,11 @@ Mail is never sent inside a request. \`MailQueue.enqueue()\` adds a job to the \
     },
     {
       title: 'Tests',
-      body: (options) => `
-- \`test\` runs unit tests (\`src/**/*.spec.ts\`).
-- \`test:e2e\` runs \`test/**/*.e2e-spec.ts\` and \`test/**/*.int-spec.ts\` against real database and Redis containers (Testcontainers; Docker must be running).
-- ${UNIT_TESTS_BY_PATTERN[options.pattern]} The suites in \`test/contracts/\` define how a repository must behave; they run against the fakes and, in \`test:e2e\`, against the real database.
-- E2e tests boot the real app with \`createTestApp()\` from \`test/support/app.ts\` and call it over HTTP with \`request()\` from \`test/support/http.ts\`. Sent mail is captured in \`mailbox\`; \`test/support/auth.ts\` seeds users and signs them in.
+      body: `
+- \`test\` runs the feature tests, \`tests/<feature>/<scenario>.test.ts\`, against real database, Redis and Mailpit containers (Testcontainers; Docker must be running). Its global setup migrates the database once with \`db:migrate\`.
+- A feature test drives the app from outside and asserts only what can be observed: it calls the API over HTTP, runs a script such as \`db:seed\`, or boots the app, then checks the response, the data the API returns, or the mail Mailpit caught. There are no unit tests; a case the API can't reach is dead code or needs a real entry point.
+- \`createTestApp()\` in \`tests/support/test-app.ts\` boots the real app on a random port; \`request()\` in \`tests/support/http.ts\` calls it. \`tests/support/auth.ts\` seeds users and signs them in, and \`tests/support/mail.ts\` reads the mail the app sent.
+- Test files share the containers, so they run one at a time; each empties the database, Redis and the mailbox before every test with \`reset()\`.
 `,
     },
     {
