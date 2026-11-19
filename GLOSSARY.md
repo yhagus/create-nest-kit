@@ -88,6 +88,6 @@ _Avoid_: Adapter, store
 The endpoints, status codes and payloads every combo serves identically.
 _Avoid_: Contract, API spec
 
-**Contract suite**:
-A shared test suite every implementation of a port must pass.
-_Avoid_: Contract, contract test
+**Feature test**:
+A test that drives the installer or a generated project from outside and asserts only what can be observed.
+_Avoid_: E2E test, integration test, unit test
