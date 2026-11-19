@@ -19,7 +19,7 @@ const PACKAGE_JSON = path.join(ROOT, 'packages/create-nest-kit/package.json');
 const SCENARIO_TIMEOUT_MS = 5 * 60_000;
 const NODE_TOO_OLD = 'Node.js 24.15 or newer';
 const DOWNLOADING = 'Downloading';
-const DRY_RUN_PLAN = 'Layers:\n  base\n  platform/fastify\n';
+const DRY_RUN_PLAN = 'Layers:\n  base\n  layout/nested\n  platform/fastify\n';
 
 interface CommandResult {
   exitCode: number;
