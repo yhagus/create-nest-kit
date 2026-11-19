@@ -20,3 +20,7 @@ How layers compose, and how template paths map to project paths (relocation, `@/
 
 - Fast: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm -r test`
 - Generated projects: `pnpm matrix --only '<combo id>'` (ids are `platform-database-orm-auth-validation-pattern-layout`; needs Docker; `test:e2e` needs host ports 5432 and 6379 free)
+
+## Releasing
+
+How to cut a release (version, CHANGELOG section, tag): `docs/agents/releasing.md`.
