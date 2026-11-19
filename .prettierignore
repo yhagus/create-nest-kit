@@ -15,3 +15,4 @@ packages/create-nest-kit/templates/**/src/generated
 # The front end of API + web projects: generated projects skip web/ too, and it keeps the
 # formatting its own tools (nuxi, shadcn-vue) write.
 packages/create-nest-kit/templates/web
+CHANGELOG.md
