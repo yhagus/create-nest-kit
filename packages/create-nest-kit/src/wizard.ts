@@ -5,6 +5,8 @@ import {
   DATABASE_LABELS,
   DEV_ENVIRONMENT_HINTS,
   DEV_ENVIRONMENT_LABELS,
+  LAYOUT_HINTS,
+  LAYOUT_LABELS,
   PATTERN_HINTS,
   PATTERN_LABELS,
   PLATFORM_LABELS,
@@ -18,6 +20,7 @@ import {
   AUTH_STYLES,
   DATABASES,
   DEV_ENVIRONMENTS,
+  LAYOUTS,
   packageNameProblem,
   parseProjectOptions,
   PATTERNS,
@@ -27,6 +30,7 @@ import {
   type AuthStyle,
   type Database,
   type DevEnvironment,
+  type Layout,
   type Orm,
   type PackageManager,
   type Pattern,
@@ -65,6 +69,7 @@ interface WizardPrompts {
   auth: AuthStyle | symbol;
   validation: Validation | symbol;
   pattern: Pattern | symbol;
+  layout: Layout | symbol;
   emailVerification: boolean | symbol;
   csrf: boolean | symbol;
   packageManager: PackageManager | symbol;
@@ -198,6 +203,27 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
                       pattern,
                     }),
                   PATTERN_HINTS,
+                ),
+              }),
+        layout: ({ results }) =>
+          preset.layout !== undefined
+            ? Promise.resolve(preset.layout)
+            : p.select({
+                message: 'Folder layout',
+                ...selectStep(
+                  LAYOUTS,
+                  LAYOUT_LABELS,
+                  (layout) =>
+                    isAvailable({
+                      platform: results.platform,
+                      database: results.database,
+                      orm: results.orm,
+                      auth: results.auth,
+                      validation: results.validation,
+                      pattern: results.pattern,
+                      layout,
+                    }),
+                  LAYOUT_HINTS,
                 ),
               }),
         emailVerification: () =>

@@ -3,6 +3,8 @@ import { jwtAuthLayer } from './auth/jwt.ts';
 import { nestAuthLayer } from './auth/nest.ts';
 import { baseLayer } from './base.ts';
 import { mongodbLayer } from './database/mongodb.ts';
+import { flatLayoutLayer } from './layout/flat.ts';
+import { nestedLayoutLayer } from './layout/nested.ts';
 import { cqrsAuthJwtLayer } from './pattern/cqrs/auth-jwt.ts';
 import { cqrsAuthNestLayer } from './pattern/cqrs/auth-nest.ts';
 import { cqrsCoreLayer } from './pattern/cqrs/core.ts';
@@ -37,12 +39,14 @@ import { nuxtWebLayer } from './web/nuxt.ts';
 
 /**
  * Every layer in composition order:
- * base → platform → database → validation → pattern core → persistence core → persistence auth →
+ * base → layout → platform → database → validation → pattern core → persistence core → persistence auth →
  * auth → pattern auth → web.
  * Later layers may rely on files from earlier ones, but never overwrite them.
  */
 export const LAYERS: readonly LayerManifest[] = [
   baseLayer,
+  nestedLayoutLayer,
+  flatLayoutLayer,
   fastifyLayer,
   expressLayer,
   nodeLayer,

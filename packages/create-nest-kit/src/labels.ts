@@ -2,6 +2,7 @@ import type {
   AuthStyle,
   Database,
   DevEnvironment,
+  Layout,
   Orm,
   Pattern,
   Platform,
@@ -82,6 +83,17 @@ export const PATTERN_HINTS: Record<Pattern, string> = {
   cqrs: 'commands and queries with their own handlers (@nestjs/cqrs)',
 };
 
+export const LAYOUT_LABELS: Record<Layout, string> = {
+  nested: 'Nested',
+  flat: 'Flat',
+};
+
+/** Shown next to each layout in the wizard. */
+export const LAYOUT_HINTS: Record<Layout, string> = {
+  nested: 'src/modules, src/common, src/infra',
+  flat: 'src/<module>, src/libs, @/ imports',
+};
+
 export function onOffLabel(isEnabled: boolean): string {
   return isEnabled ? 'on' : 'off';
 }
@@ -100,6 +112,7 @@ export function describeOptions(options: ProjectOptions): [string, string][] {
     ['Auth style', AUTH_LABELS[options.auth]],
     ['Validation library', VALIDATION_LABELS[options.validation]],
     ['Application pattern', PATTERN_LABELS[options.pattern]],
+    ['Folder layout', LAYOUT_LABELS[options.layout]],
     ['Email verification', onOffLabel(options.emailVerification)],
     ['CSRF protection', onOffLabel(options.csrf)],
     ['Package manager', options.packageManager],

@@ -16,6 +16,7 @@ describe('built-in layers', () => {
 
     expect(ids).toEqual([
       'base',
+      `layout/${combo.layout}`,
       `platform/${combo.platform}`,
       `database/${combo.database}`,
       `validation/${combo.validation}`,

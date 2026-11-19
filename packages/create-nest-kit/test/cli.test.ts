@@ -53,7 +53,7 @@ describe('create-nest-kit CLI', () => {
 
     expect(result).toMatchObject({ exitCode: 0, stderr: '' });
     expect(result.stdout).toContain(
-      'Layers:\n  base\n  platform/fastify\n  database/postgres\n  validation/zod\n',
+      'Layers:\n  base\n  layout/nested\n  platform/fastify\n  database/postgres\n  validation/zod\n',
     );
     expect(result.stdout).toMatch(/src\/bootstrap\/create-app\.ts +platform\/fastify/);
     expect(result.stdout).toContain('@nestjs/core@12.2.0');

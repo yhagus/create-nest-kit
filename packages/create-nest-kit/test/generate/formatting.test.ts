@@ -94,6 +94,31 @@ describe('formatting of generated projects', () => {
     ALL_COMBOS_TIMEOUT_MS,
   );
 
+  it(
+    'keeps templates prettier-clean once their imports are relocated, for every ready combo',
+    async () => {
+      const readyCombos = listCombos().filter((combo) =>
+        isComboReady(combo, BUILT_IN_LAYER_SET.layers),
+      );
+
+      const plans = await Promise.all(
+        readyCombos.map((combo) => composeProject(optionsForCombo(combo), BUILT_IN_LAYER_SET)),
+      );
+      // Most combos relocate the same files the same way: check each distinct result once.
+      const relocatedFiles = new Map(
+        plans
+          .flatMap((plan) => plan.templateFiles)
+          .flatMap(({ target, content }) =>
+            content === undefined ? [] : [[`${target}\n${content}`, { target, content }] as const],
+          ),
+      );
+      const unformatted = await unformattedFiles([...relocatedFiles.values()]);
+
+      expect(unformatted.map((file) => file.target)).toEqual([]);
+    },
+    ALL_COMBOS_TIMEOUT_MS,
+  );
+
   // The repo's own `pnpm format` (and editors, which find no config named `_prettierrc`) format
   // the templates with the root config, so it must not drift from the one projects get.
   it('formats the templates in this repo with the same settings as generated projects', async () => {

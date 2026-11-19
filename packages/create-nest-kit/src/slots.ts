@@ -4,6 +4,11 @@
  * Add a path here when code starts importing a new variant file from another layer.
  */
 export const REQUIRED_SLOTS: readonly string[] = [
+  // layout/*: base's tsconfig.build.json extends tsconfig.json; its scripts run the other three
+  'tsconfig.json',
+  'nest-cli.json',
+  'vitest.config.ts',
+  'vitest.config.e2e.ts',
   // platform/*
   'src/bootstrap/create-app.ts',
   // database/*

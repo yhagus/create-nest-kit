@@ -10,8 +10,8 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { RequirePermissions } from '../../auth/decorators.js';
 import { Permission } from '../permissions/permission.js';
-import { RevokeUserSessionCommand } from './commands/revoke-user-session/revoke-user-session.command.js';
-import { ListActiveSessionsQuery } from './queries/list-active-sessions/list-active-sessions.query.js';
+import { RevokeUserSessionCommand } from './commands/impl/revoke-user-session.command.js';
+import { ListActiveSessionsQuery } from './queries/impl/list-active-sessions.query.js';
 import { type SessionView, toSessionView } from './session.view.js';
 
 /** An administrator's view of another user's sessions. Users manage their own under /auth/sessions. */

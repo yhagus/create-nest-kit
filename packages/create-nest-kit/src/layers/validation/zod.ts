@@ -1,3 +1,4 @@
+import { projectPath } from '../../generate/relocate.ts';
 import type { LayerManifest } from '../types.ts';
 
 export const zodValidationLayer: LayerManifest = {
@@ -10,8 +11,8 @@ export const zodValidationLayer: LayerManifest = {
   readme: [
     {
       title: 'Validation (Zod)',
-      body: `
-Request bodies and query strings are validated with [Zod](https://zod.dev) schemas, one file per area: \`src/auth/auth.dto.ts\`, \`src/modules/users/users.dto.ts\`, \`src/modules/roles/roles.dto.ts\`.
+      body: (options) => `
+Request bodies and query strings are validated with [Zod](https://zod.dev) schemas, one file per area: \`${projectPath('src/auth/auth.dto.ts', options)}\`, \`${projectPath('src/modules/users/users.dto.ts', options)}\`, \`${projectPath('src/modules/roles/roles.dto.ts', options)}\`.
 
 - A DTO is a schema and the type inferred from it, under one name:
 
@@ -24,7 +25,7 @@ Request bodies and query strings are validated with [Zod](https://zod.dev) schem
   \`\`\`
 
 - Use \`z.strictObject()\`, so unknown properties are rejected. Derive variants with \`.pick()\`, \`.partial()\` and \`.extend()\`.
-- A handler takes the DTO with \`@ValidBody(CreateRoleDto) dto: CreateRoleDto\` or \`@ValidQuery(ListUsersQuery) query: ListUsersQuery\` (\`src/common/validation.ts\`). The global \`StandardSchemaValidationPipe\` validates the value with that schema and hands the handler its output, transforms and defaults applied.
+- A handler takes the DTO with \`@ValidBody(CreateRoleDto) dto: CreateRoleDto\` or \`@ValidQuery(ListUsersQuery) query: ListUsersQuery\` (\`${projectPath('src/common/validation.ts', options)}\`). The global \`StandardSchemaValidationPipe\` validates the value with that schema and hands the handler its output, transforms and defaults applied.
 - Every failing field is listed in the 400 \`VALIDATION_FAILED\` body as \`details: [{ field, errors }]\`.
 - Query strings arrive as strings: convert numbers with \`z.coerce.number()\`, as \`PaginationQuery\` in \`users.dto.ts\` does.
 - Swagger documents bodies and query parameters from the same schemas (their JSON Schema), so there is nothing to keep in sync.

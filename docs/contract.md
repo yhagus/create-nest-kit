@@ -16,7 +16,7 @@ fix one of them in the same change.
 - Every error body is `{ statusCode, errorCode, message, details? }`. `details` carries field errors for
   `VALIDATION_FAILED`. Response bodies never reveal which policy or permission failed.
 - Every handler declares exactly one of `@Public()`, `@Authenticated()` or `@RequirePermissions(...)`
-  (from `src/auth/decorators.ts`). A handler with none is refused in both auth styles (deny by default): 401 for anonymous callers
+  (from `src/auth/decorators.ts`, or `src/auth/decorators/decorators.ts` in the CQRS pattern; the same in either folder layout). A handler with none is refused in both auth styles (deny by default): 401 for anonymous callers
   (authentication runs first), 403 `AUTH_FORBIDDEN` for signed-in ones.
 
 ## Error codes

@@ -120,6 +120,7 @@ function comboFlags(combo: Combo): string[] {
     auth: ['--auth', combo.auth],
     validation: ['--validation', combo.validation],
     pattern: ['--pattern', combo.pattern],
+    layout: ['--layout', combo.layout],
   };
   return [
     ...Object.values(choiceFlags).flat(),

@@ -18,6 +18,8 @@ Options:
   --validation <zod|class-validator|valibot|arktype>
                                             Validation library (default: zod)
   --pattern <service|cqrs>                  Controller + service, or CQRS with @nestjs/cqrs (default: service)
+  --layout <nested|flat>                    src/modules, src/common and src/infra, or one src/<module> folder
+                                            per module with src/libs and @/ imports (default: nested)
   --[no-]email-verification                 Require email verification (default: on)
   --[no-]csrf                               CSRF protection (default: on)
   --pm <pnpm|npm|yarn|bun>                  Package manager (default: the one running this command;

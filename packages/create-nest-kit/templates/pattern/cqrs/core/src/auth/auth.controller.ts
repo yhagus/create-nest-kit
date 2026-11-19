@@ -16,11 +16,11 @@ import {
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ValidBody } from '../common/validation.js';
 import { AuthThrottle } from '../infra/throttler/auth-throttle.js';
-import { RevokeAllUserSessionsCommand } from '../modules/sessions/commands/revoke-all-user-sessions/revoke-all-user-sessions.command.js';
-import { RevokeUserSessionCommand } from '../modules/sessions/commands/revoke-user-session/revoke-user-session.command.js';
-import { ListActiveSessionsQuery } from '../modules/sessions/queries/list-active-sessions/list-active-sessions.query.js';
+import { RevokeAllUserSessionsCommand } from '../modules/sessions/commands/impl/revoke-all-user-sessions.command.js';
+import { RevokeUserSessionCommand } from '../modules/sessions/commands/impl/revoke-user-session.command.js';
+import { ListActiveSessionsQuery } from '../modules/sessions/queries/impl/list-active-sessions.query.js';
 import { type SessionView, toSessionView } from '../modules/sessions/session.view.js';
-import { UpdateUserCommand } from '../modules/users/commands/update-user/update-user.command.js';
+import { UpdateUserCommand } from '../modules/users/commands/impl/update-user.command.js';
 import { toUserView, type UserView } from '../modules/users/user.view.js';
 import type { User } from '../modules/users/user.js';
 import {
@@ -35,15 +35,15 @@ import {
   VerifyEmailDto,
 } from './auth.dto.js';
 import { InvalidRefreshTokenException } from './auth.exceptions.js';
-import { ChangePasswordCommand } from './commands/change-password/change-password.command.js';
-import { ForgotPasswordCommand } from './commands/forgot-password/forgot-password.command.js';
-import { LoginCommand } from './commands/login/login.command.js';
-import { LogoutCommand } from './commands/logout/logout.command.js';
-import { RefreshTokensCommand } from './commands/refresh-tokens/refresh-tokens.command.js';
-import { RegisterCommand } from './commands/register/register.command.js';
-import { ResendVerificationCommand } from './commands/resend-verification/resend-verification.command.js';
-import { ResetPasswordCommand } from './commands/reset-password/reset-password.command.js';
-import { VerifyEmailCommand } from './commands/verify-email/verify-email.command.js';
+import { ChangePasswordCommand } from './commands/impl/change-password.command.js';
+import { ForgotPasswordCommand } from './commands/impl/forgot-password.command.js';
+import { LoginCommand } from './commands/impl/login.command.js';
+import { LogoutCommand } from './commands/impl/logout.command.js';
+import { RefreshTokensCommand } from './commands/impl/refresh-tokens.command.js';
+import { RegisterCommand } from './commands/impl/register.command.js';
+import { ResendVerificationCommand } from './commands/impl/resend-verification.command.js';
+import { ResetPasswordCommand } from './commands/impl/reset-password.command.js';
+import { VerifyEmailCommand } from './commands/impl/verify-email.command.js';
 import { Authenticated, CurrentSessionId, CurrentUser, Public } from './decorators.js';
 import { REFRESH_COOKIE, RefreshCookie } from './refresh-cookie.js';
 import type { LoginView, TokenPairView } from './token-pair.view.js';

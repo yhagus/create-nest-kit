@@ -5,7 +5,7 @@ on:
   workflow_call:
     inputs:
       subset:
-        description: pr (20 combos, pairwise) or all (240)
+        description: pr (20 combos, pairwise) or all (480)
         type: string
         required: true
 

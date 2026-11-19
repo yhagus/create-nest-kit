@@ -106,23 +106,24 @@ is no PowerShell installer yet.
 
 Any option given as a flag is not asked for. With `--yes`, everything not given takes its default.
 
-| Option              | Choices (default first)                                                                            | Flag                                                  |
-| ------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Project folder      | `nest-api`, created in the current folder; `.` uses the current folder itself                      | positional `[dir]`                                    |
-| Package name        | the folder's name; asked when that isn't a valid npm package name                                  | `--name <package-name>`                               |
-| Project type        | API only · API + web (a Nuxt front end in `web/`, run with bun)                                    | `--type api\|fullstack`                               |
-| HTTP platform       | Fastify · Express · Node (native `node:http`, `@nestjs/platform-node`)                             | `--platform fastify\|express\|node`                   |
-| Database            | PostgreSQL · MongoDB                                                                               | `--db postgres\|mongodb`                              |
-| ORM / ODM           | PostgreSQL: Drizzle · Prisma 7 · TypeORM · MikroORM. MongoDB: Mongoose                             | `--orm drizzle\|prisma\|typeorm\|mikroorm\|mongoose`  |
-| Auth style          | Hand-rolled `@nestjs/jwt` + argon2id · official `@nestjs/authentication` + `@nestjs/authorization` | `--auth jwt\|nest`                                    |
-| Validation library  | Zod · class-validator · Valibot · ArkType                                                          | `--validation zod\|class-validator\|valibot\|arktype` |
-| Application pattern | Controller + service · CQRS (`@nestjs/cqrs`)                                                       | `--pattern service\|cqrs`                             |
-| Email verification  | on · off                                                                                           | `--[no-]email-verification`                           |
-| CSRF protection     | on · off                                                                                           | `--[no-]csrf`                                         |
-| Package manager     | `--pm`, else asked among the installed ones (pnpm first); npm with `--yes`                         | `--pm pnpm\|npm\|yarn\|bun`                           |
-| Dev environment     | Local Node.js (databases in Docker) · Docker (the API in a container too)                          | `--dev-env local\|docker`                             |
-| Install             | yes · no                                                                                           | `--no-install`                                        |
-| Git repository      | yes · no (skipped inside an existing repository)                                                   | `--no-git`                                            |
+| Option              | Choices (default first)                                                                                                                                                 | Flag                                                  |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Project folder      | `nest-api`, created in the current folder; `.` uses the current folder itself                                                                                           | positional `[dir]`                                    |
+| Package name        | the folder's name; asked when that isn't a valid npm package name                                                                                                       | `--name <package-name>`                               |
+| Project type        | API only · API + web (a Nuxt front end in `web/`, run with bun)                                                                                                         | `--type api\|fullstack`                               |
+| HTTP platform       | Fastify · Express · Node (native `node:http`, `@nestjs/platform-node`)                                                                                                  | `--platform fastify\|express\|node`                   |
+| Database            | PostgreSQL · MongoDB                                                                                                                                                    | `--db postgres\|mongodb`                              |
+| ORM / ODM           | PostgreSQL: Drizzle · Prisma 7 · TypeORM · MikroORM. MongoDB: Mongoose                                                                                                  | `--orm drizzle\|prisma\|typeorm\|mikroorm\|mongoose`  |
+| Auth style          | Hand-rolled `@nestjs/jwt` + argon2id · official `@nestjs/authentication` + `@nestjs/authorization`                                                                      | `--auth jwt\|nest`                                    |
+| Validation library  | Zod · class-validator · Valibot · ArkType                                                                                                                               | `--validation zod\|class-validator\|valibot\|arktype` |
+| Application pattern | Controller + service · CQRS (`@nestjs/cqrs`, with the role folders of its official example)                                                                             | `--pattern service\|cqrs`                             |
+| Folder layout       | Nested (`src/modules/`, `src/common/`, `src/infra/`, relative imports) · Flat (one `src/<module>/` per module, shared code in `src/libs/`, `@/` imports across modules) | `--layout nested\|flat`                               |
+| Email verification  | on · off                                                                                                                                                                | `--[no-]email-verification`                           |
+| CSRF protection     | on · off                                                                                                                                                                | `--[no-]csrf`                                         |
+| Package manager     | `--pm`, else asked among the installed ones (pnpm first); npm with `--yes`                                                                                              | `--pm pnpm\|npm\|yarn\|bun`                           |
+| Dev environment     | Local Node.js (databases in Docker) · Docker (the API in a container too)                                                                                               | `--dev-env local\|docker`                             |
+| Install             | yes · no                                                                                                                                                                | `--no-install`                                        |
+| Git repository      | yes · no (skipped inside an existing repository)                                                                                                                        | `--no-git`                                            |
 
 **Compatibility:** MongoDB works only with Mongoose, so the wizard picks it without asking; the four
 SQL ORMs work only with PostgreSQL. A flag combination that breaks this rule fails before anything
@@ -130,6 +131,11 @@ is written, with a hint (`--orm drizzle is not available for MongoDB; use --orm 
 
 Email verification and CSRF only set defaults in `.env` (`EMAIL_VERIFICATION_ENABLED`,
 `CSRF_ENABLED`); the code for both is always generated.
+
+The flat layout follows the nested one file for file: `src/modules/<module>/` becomes
+`src/<module>/`, `src/infra/<module>/` becomes `src/<module>/` and `src/common/` becomes
+`src/libs/`. An import that leaves its module uses the `@/` alias for `src/`, declared in
+`tsconfig.json`; Vitest resolves it, and `nest build` rewrites it in `dist/`.
 
 The dev environment only changes `docker-compose.yml` and the README's quickstart. With `docker`,
 compose gets an `api` service that runs the project from a mount: on every start it installs
@@ -212,13 +218,13 @@ prints a pass/fail table and keeps the logs and failed projects in `$MATRIX_DIR`
 
 ```sh
 pnpm matrix --subset pr                  # 20 combos: every pair of choices at least once (pairwise)
-pnpm matrix --only 'express-*-nest-*'    # glob on <platform>-<database>-<orm>-<auth>-<validation>-<pattern>
+pnpm matrix --only 'express-*-nest-*'    # glob on <platform>-<database>-<orm>-<auth>-<validation>-<pattern>-<layout>
 pnpm matrix --only 'fastify-postgres-drizzle-jwt-zod-service' --steps install,typecheck --keep
 node scripts/matrix.ts --list --subset pr  # print the selected ids as JSON
 ```
 
 CI runs the PR subset on every push to `main`, one job per combo, and uploads the logs of failed
-combos as artifacts. All 240 run only locally, with `pnpm matrix`; it takes hours.
+combos as artifacts. All 480 run only locally, with `pnpm matrix`; it takes hours.
 
 ### Smoke tests
 

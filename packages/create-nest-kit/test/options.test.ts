@@ -3,6 +3,7 @@ import {
   AUTH_STYLES,
   listCombos,
   OptionsError,
+  LAYOUTS,
   ORMS,
   PATTERNS,
   parseProjectOptions,
@@ -24,6 +25,7 @@ describe('parseProjectOptions', () => {
       auth: 'jwt',
       validation: 'zod',
       pattern: 'service',
+      layout: 'nested',
       emailVerification: true,
       csrf: true,
       packageManager: 'npm',
@@ -70,16 +72,18 @@ describe('parseProjectOptions', () => {
 });
 
 describe('listCombos', () => {
-  it('lists the 240 valid combinations with unique ids', () => {
+  it('lists the 480 valid combinations with unique ids', () => {
     const ids = listCombos().map((combo) => combo.id);
 
-    expect(new Set(ids).size).toBe(240);
-    expect(ids).toContain('fastify-postgres-drizzle-jwt-zod-service');
-    expect(ids).toContain('express-mongodb-mongoose-nest-arktype-cqrs');
-    expect(ids).toContain('node-postgres-prisma-jwt-valibot-service');
+    expect(new Set(ids).size).toBe(480);
+    expect(ids).toContain('fastify-postgres-drizzle-jwt-zod-service-nested');
+    expect(ids).toContain('express-mongodb-mongoose-nest-arktype-cqrs-flat');
+    expect(ids).toContain('node-postgres-prisma-jwt-valibot-service-flat');
     expect(ids.filter((id) => id.startsWith('fastify-mongodb-mongoose-jwt-zod-'))).toEqual([
-      'fastify-mongodb-mongoose-jwt-zod-service',
-      'fastify-mongodb-mongoose-jwt-zod-cqrs',
+      'fastify-mongodb-mongoose-jwt-zod-service-nested',
+      'fastify-mongodb-mongoose-jwt-zod-service-flat',
+      'fastify-mongodb-mongoose-jwt-zod-cqrs-nested',
+      'fastify-mongodb-mongoose-jwt-zod-cqrs-flat',
     ]);
   });
 });
@@ -91,6 +95,7 @@ const DIMENSIONS = {
   auth: AUTH_STYLES,
   validation: VALIDATION_LIBRARIES,
   pattern: PATTERNS,
+  layout: LAYOUTS,
 } as const;
 type Dimension = keyof typeof DIMENSIONS;
 
@@ -121,6 +126,11 @@ describe('prSubset', () => {
     ['pattern', 'orm'],
     ['pattern', 'auth'],
     ['pattern', 'validation'],
+    ['layout', 'platform'],
+    ['layout', 'orm'],
+    ['layout', 'auth'],
+    ['layout', 'validation'],
+    ['layout', 'pattern'],
   ] as const)('covers every (%s, %s) pair', (first, second) => {
     expect(missingPairs(subset, first, second)).toEqual([]);
   });
@@ -128,13 +138,14 @@ describe('prSubset', () => {
   // Validation libraries become ready one at a time, so each one's slice must stand on its own.
   // Its five combos can't hold all six (platform, auth) pairs, but they hold every value of both.
   it.each(VALIDATION_LIBRARIES)(
-    'runs every platform, auth style and pattern within the %s combos',
+    'runs every platform, auth style, pattern and layout within the %s combos',
     (validation) => {
       const combosOfLibrary = subset.filter((combo) => combo.validation === validation);
 
       expect(new Set(combosOfLibrary.map((combo) => combo.platform))).toEqual(new Set(PLATFORMS));
       expect(new Set(combosOfLibrary.map((combo) => combo.auth))).toEqual(new Set(AUTH_STYLES));
       expect(new Set(combosOfLibrary.map((combo) => combo.pattern))).toEqual(new Set(PATTERNS));
+      expect(new Set(combosOfLibrary.map((combo) => combo.layout))).toEqual(new Set(LAYOUTS));
     },
   );
 });

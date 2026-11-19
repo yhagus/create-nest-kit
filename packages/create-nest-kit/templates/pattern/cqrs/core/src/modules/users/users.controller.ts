@@ -14,11 +14,11 @@ import { CurrentUser, RequirePermissions } from '../../auth/decorators.js';
 import type { Page } from '../../common/pagination.js';
 import { ValidBody, ValidQuery } from '../../common/validation.js';
 import { Permission } from '../permissions/permission.js';
-import { CreateUserCommand } from './commands/create-user/create-user.command.js';
-import { DeleteUserCommand } from './commands/delete-user/delete-user.command.js';
-import { UpdateUserCommand } from './commands/update-user/update-user.command.js';
-import { GetUserQuery } from './queries/get-user/get-user.query.js';
-import { ListUsersQuery } from './queries/list-users/list-users.query.js';
+import { CreateUserCommand } from './commands/impl/create-user.command.js';
+import { DeleteUserCommand } from './commands/impl/delete-user.command.js';
+import { UpdateUserCommand } from './commands/impl/update-user.command.js';
+import { GetUserQuery } from './queries/impl/get-user.query.js';
+import { ListUsersQuery } from './queries/impl/list-users.query.js';
 import type { User } from './user.js';
 import { toUserView, type UserView } from './user.view.js';
 // The query-string DTO shares its name with the CQRS query.

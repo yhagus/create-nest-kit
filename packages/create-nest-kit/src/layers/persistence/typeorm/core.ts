@@ -1,3 +1,4 @@
+import { projectFolder } from '../../../generate/relocate.ts';
 import type { LayerManifest } from '../../types.ts';
 
 // The TypeORM CLI loads the data source with a plain `import()`, which can't read TypeScript
@@ -30,9 +31,9 @@ export const typeormCoreLayer: LayerManifest = {
   readme: [
     {
       title: 'Database (TypeORM)',
-      body: `
+      body: (options) => `
 - Entities live in \`src/database/entities/\` (\`*.entity.ts\`). Every column states its database \`type\` and snake_case \`name\`; constraints and indexes are named explicitly.
-- The repositories in \`src/database/repositories/\` implement the ports in \`src/modules/*/\` with TypeORM repositories and the query builder. \`src/database/database.module.ts\` binds them; register a new entity with \`TypeOrmModule.forFeature()\` in the module that uses it.
+- The repositories in \`src/database/repositories/\` implement the ports in \`${projectFolder('src/modules/*/users.repository.ts', options)}\` with TypeORM repositories and the query builder. \`src/database/database.module.ts\` binds them; register a new entity with \`TypeOrmModule.forFeature()\` in the module that uses it.
 - After changing an entity, write a migration from the difference between the entities and the database, then apply it:
   \`db:migration:create src/database/migrations/<Name>\`, then \`db:migrate\`. Both build the project first, because the TypeORM CLI reads the compiled files in \`dist/\` through \`src/database/data-source.ts\`.
 - Migrations never run on start-up. The test setup runs every file in \`src/database/migrations/\`.

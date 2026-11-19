@@ -8,6 +8,7 @@ export const ORMS = ['drizzle', 'prisma', 'typeorm', 'mikroorm', 'mongoose'] as 
 export const AUTH_STYLES = ['jwt', 'nest'] as const;
 export const VALIDATION_LIBRARIES = ['zod', 'class-validator', 'valibot', 'arktype'] as const;
 export const PATTERNS = ['service', 'cqrs'] as const;
+export const LAYOUTS = ['nested', 'flat'] as const;
 export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn', 'bun'] as const;
 export const DEV_ENVIRONMENTS = ['local', 'docker'] as const;
 
@@ -20,6 +21,12 @@ export type AuthStyle = (typeof AUTH_STYLES)[number];
 export type Validation = (typeof VALIDATION_LIBRARIES)[number];
 /** How each module is organised: controllers calling services, or commands and queries on buses. */
 export type Pattern = (typeof PATTERNS)[number];
+/**
+ * Where the code lives: `nested` groups it under `src/modules/`, `src/common/` and `src/infra/`
+ * with relative imports; `flat` puts each module in `src/<module>/`, shared code in `src/libs/`,
+ * and imports another module through the `@/` alias.
+ */
+export type Layout = (typeof LAYOUTS)[number];
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
 /** Where the API runs in development: `local` on the host's Node, `docker` in a compose service. */
 export type DevEnvironment = (typeof DEV_ENVIRONMENTS)[number];
@@ -38,6 +45,7 @@ export interface ProjectChoices {
   auth: AuthStyle;
   validation: Validation;
   pattern: Pattern;
+  layout: Layout;
   emailVerification: boolean;
   csrf: boolean;
   packageManager: PackageManager;
@@ -56,10 +64,10 @@ export interface ProjectOptions extends ProjectChoices {
 }
 
 /**
- * The six choices that change the API's code. Every other option only changes config values, or
+ * The seven choices that change the API's code. Every other option only changes config values, or
  * (the project type) adds a package the API doesn't depend on.
  */
-type ComboChoice = 'platform' | 'database' | 'orm' | 'auth' | 'validation' | 'pattern';
+type ComboChoice = 'platform' | 'database' | 'orm' | 'auth' | 'validation' | 'pattern' | 'layout';
 
 export type Combo = Pick<ProjectChoices, ComboChoice> & { id: string };
 
@@ -107,6 +115,7 @@ export const projectOptionsSchema = z.object({
   auth: z.enum(AUTH_STYLES).default('jwt'),
   validation: z.enum(VALIDATION_LIBRARIES).default('zod'),
   pattern: z.enum(PATTERNS).default('service'),
+  layout: z.enum(LAYOUTS).default('nested'),
   emailVerification: z.boolean().default(true),
   csrf: z.boolean().default(true),
   packageManager: z.enum(PACKAGE_MANAGERS).default('npm'),
@@ -156,10 +165,10 @@ export function parseProjectOptions(input: ProjectOptionsInput): ProjectOptions 
 }
 
 export function comboId(combo: Omit<Combo, 'id'>): string {
-  return `${combo.platform}-${combo.database}-${combo.orm}-${combo.auth}-${combo.validation}-${combo.pattern}`;
+  return `${combo.platform}-${combo.database}-${combo.orm}-${combo.auth}-${combo.validation}-${combo.pattern}-${combo.layout}`;
 }
 
-/** All valid platform × persistence × auth × validation × pattern combinations (240). */
+/** All valid platform × persistence × auth × validation × pattern × layout combinations (480). */
 export function listCombos(): Combo[] {
   const combos: Combo[] = [];
   for (const platform of PLATFORMS) {
@@ -168,8 +177,10 @@ export function listCombos(): Combo[] {
         for (const auth of AUTH_STYLES) {
           for (const validation of VALIDATION_LIBRARIES) {
             for (const pattern of PATTERNS) {
-              const combo = { platform, database, orm, auth, validation, pattern };
-              combos.push({ ...combo, id: comboId(combo) });
+              for (const layout of LAYOUTS) {
+                const combo = { platform, database, orm, auth, validation, pattern, layout };
+                combos.push({ ...combo, id: comboId(combo) });
+              }
             }
           }
         }
@@ -186,14 +197,16 @@ const PLATFORM_AUTH_PAIRS = AUTH_STYLES.flatMap((auth) =>
 
 /**
  * The 20 combos CI runs on every push to main: a pairwise covering array, so every pair of values
- * from any two of platform, ORM, auth, validation and pattern runs at least once.
+ * from any two of platform, ORM, auth, validation, pattern and layout runs at least once.
  *
  * Each (orm, validation) pair runs once, and 20 is the minimum for that. The (platform, auth)
  * pair rotates by `ormIndex + validationIndex` through the six pairs, listed auth by auth, so any
  * three pairs in a row cover every platform and any four cover both auth styles. Each ORM runs
  * four pairs in a row, and each validation library five, over its five ORMs. The pattern follows
  * the rotation's parity, so any two in a row cover both, and since 2 and 3 are coprime, the six
- * rotations from 0 pair each pattern with each platform.
+ * rotations from 0 pair each pattern with each platform. The layout follows the rotation's second
+ * bit, so any four in a row cover every (pattern, layout) pair, and the rotations 0 to 7 pair
+ * each layout with each platform and auth style.
  */
 export function prSubset(): Combo[] {
   return listCombos().filter((combo) => {
@@ -202,7 +215,8 @@ export function prSubset(): Combo[] {
     return (
       combo.platform === pair?.platform &&
       combo.auth === pair.auth &&
-      combo.pattern === PATTERNS[rotation % PATTERNS.length]
+      combo.pattern === PATTERNS[rotation % PATTERNS.length] &&
+      combo.layout === LAYOUTS[Math.floor(rotation / PATTERNS.length) % LAYOUTS.length]
     );
   });
 }
@@ -218,5 +232,6 @@ export function optionsForCombo(combo: Combo): ProjectOptions {
     auth: combo.auth,
     validation: combo.validation,
     pattern: combo.pattern,
+    layout: combo.layout,
   });
 }

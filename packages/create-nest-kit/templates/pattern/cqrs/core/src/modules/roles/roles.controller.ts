@@ -13,11 +13,11 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { RequirePermissions } from '../../auth/decorators.js';
 import { ValidBody } from '../../common/validation.js';
 import { Permission } from '../permissions/permission.js';
-import { CreateRoleCommand } from './commands/create-role/create-role.command.js';
-import { DeleteRoleCommand } from './commands/delete-role/delete-role.command.js';
-import { UpdateRoleCommand } from './commands/update-role/update-role.command.js';
-import { GetRoleQuery } from './queries/get-role/get-role.query.js';
-import { ListRolesQuery } from './queries/list-roles/list-roles.query.js';
+import { CreateRoleCommand } from './commands/impl/create-role.command.js';
+import { DeleteRoleCommand } from './commands/impl/delete-role.command.js';
+import { UpdateRoleCommand } from './commands/impl/update-role.command.js';
+import { GetRoleQuery } from './queries/impl/get-role.query.js';
+import { ListRolesQuery } from './queries/impl/list-roles.query.js';
 import { type RoleView, toRoleView } from './role.view.js';
 import { CreateRoleDto, UpdateRoleDto } from './roles.dto.js';
 

@@ -7,10 +7,10 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { AppModule } from '../app.module.js';
 import { AppConfig } from '../config/app-config.js';
 import { parseEnv } from '../config/env.js';
-import { SyncSystemRolesCommand } from '../modules/roles/commands/sync-system-roles/sync-system-roles.command.js';
-import { CreateUserCommand } from '../modules/users/commands/create-user/create-user.command.js';
-import { UpdateUserCommand } from '../modules/users/commands/update-user/update-user.command.js';
-import { FindUserByEmailQuery } from '../modules/users/queries/find-user-by-email/find-user-by-email.query.js';
+import { SyncSystemRolesCommand } from '../modules/roles/commands/impl/sync-system-roles.command.js';
+import { CreateUserCommand } from '../modules/users/commands/impl/create-user.command.js';
+import { UpdateUserCommand } from '../modules/users/commands/impl/update-user.command.js';
+import { FindUserByEmailQuery } from '../modules/users/queries/impl/find-user-by-email.query.js';
 
 const ENV_FILE = '.env';
 const ADMIN_NAME = 'Admin';

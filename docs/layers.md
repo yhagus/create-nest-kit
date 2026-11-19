@@ -9,6 +9,7 @@ template files plus a TypeScript **manifest**. Everything below lives in
 | Layer id                            | Included when                        | Manifest                                      |
 | ----------------------------------- | ------------------------------------ | --------------------------------------------- |
 | `base`                              | always                               | `src/layers/base.ts`                          |
+| `layout/<nested\|flat>`             | `options.layout`                     | `src/layers/layout/<name>.ts`                 |
 | `platform/<fastify\|express\|node>` | `options.platform`                   | `src/layers/platform/<name>.ts`               |
 | `database/<postgres\|mongodb>`      | `options.database`                   | `src/layers/database/<name>.ts`               |
 | `validation/<library>`              | `options.validation`                 | `src/layers/validation/<library>.ts`          |
@@ -23,7 +24,7 @@ template files plus a TypeScript **manifest**. Everything below lives in
 `zod`, `class-validator`, `valibot`, `arktype`. `<pattern>` is `service` or `cqrs`.
 
 - **Order is fixed** (the order of `LAYERS` in `src/layers/registry.ts`). Every project resolves
-  the first nine layers of the table, in its order; an API + web project adds `web/nuxt` last.
+  the first ten layers of the table, in its order; an API + web project adds `web/nuxt` last.
   `web/nuxt` only adds files under `web/`, a package of its own that the generated project's
   lint, format, typecheck and Docker image skip.
 - **Template folder:** `templates/<layer id>/`, e.g. `templates/persistence/drizzle/auth-jwt/`.
@@ -36,13 +37,31 @@ template files plus a TypeScript **manifest**. Everything below lives in
 
 ## Template files
 
-- Files are copied **verbatim**. There is no template language: `{{name}}`, `<%= %>` and `${}`
-  are left as they are. Anything that depends on options goes into the manifest (env values,
+- Files are copied **verbatim**, apart from relocated imports (below). There is no template
+  language: `{{name}}`, `<%= %>` and `${}` are left as they are. Anything that depends on options goes into the manifest (env values,
   scripts, README text). Code reads options at runtime from env vars, e.g. `CSRF_ENABLED`.
 - **Dotfiles:** a path segment starting with `_` becomes `.` in the project:
   `_gitignore` → `.gitignore`, `_github/workflows/x.yml` → `.github/workflows/x.yml`.
   Real dotfiles inside `templates/` are ignored. Two underscores keep one literal underscore:
   `drizzle/meta/__journal.json` → `drizzle/meta/_journal.json`.
+- **Relocation:** templates are written in one layout, the nested service project's. `projectPath()` in
+  `src/generate/relocate.ts` maps a template path to its project path for the chosen options. In a
+  CQRS project, a feature module (`src/auth/`, `src/modules/<module>/`) keeps only
+  `*.module.ts` and `*.controller.ts` at its root; every other file there moves into the role
+  folder `ROLE_FOLDER_BY_FILE_NAME` gives it (`providers/`, `models/`, `schemas/`, `guards/`,
+  `decorators/`), a spec with its subject. A new file at a feature-module root must be added to that
+  table, or composing a CQRS project fails. Relative imports in `src/` and `test/` (`from`,
+  `import()`, `vi.mock()`) are then pointed at the moved files (`src/generate/rewrite-imports.ts`);
+  an import of a file no layer provides fails composition, and a file whose imports don't change is
+  copied byte for byte. In a flat project (`layout: flat`, the `flatLayout` step, after the role
+  folders) `src/modules/<module>/` and `src/infra/<module>/` become `src/<module>/`,
+  `src/modules/features.module.ts` becomes `src/features.module.ts` and `src/common/` becomes
+  `src/libs/`; there, an import that leaves its module (a top-level folder of `src/`, or `test/`;
+  a file directly in `src/` is a module of its own) is written with the `@/` alias, and one inside
+  it stays relative. A rewritten import is wrapped, or put back on one line, as Prettier would.
+  `layout/<layout>` provides the configs that differ: `tsconfig.json` (`paths` for `@/`),
+  `vitest.config*.ts` (`resolve.tsconfigPaths`) and `nest-cli.json` (the mail templates' asset
+  glob). Paths in README sections go through `projectPath()` or `projectFolder()`.
 - **No collisions:** each project path may come from one layer only. Layers never override each
   other's files; the composer fails and names both layers. Templates also may not provide the
   rendered files listed below.
@@ -58,27 +77,35 @@ template files plus a TypeScript **manifest**. Everything below lives in
 Code in one layer imports another layer's variant code only through fixed paths, the **slots**
 (`src/slots.ts`). Every project must contain each slot, provided by exactly one of its layers:
 
-| Slot                                      | Provided by                                                                 |
-| ----------------------------------------- | --------------------------------------------------------------------------- |
-| `src/bootstrap/create-app.ts`             | `platform/*`                                                                |
-| `src/config/database.env.ts`              | `database/*`                                                                |
-| `src/common/validation.ts`                | `validation/*`                                                              |
-| `src/config/env.schema.ts`                | `validation/*`                                                              |
-| `src/auth/auth.dto.ts`                    | `validation/*`                                                              |
-| `src/modules/users/users.dto.ts`          | `validation/*`                                                              |
-| `src/modules/roles/roles.dto.ts`          | `validation/*`                                                              |
-| `src/modules/features.module.ts`          | `pattern/<pattern>/core` (imported by `app.module.ts`)                      |
-| `src/seed/seed.ts`                        | `pattern/<pattern>/core` (`db:seed`; `seedDatabase` for the seed test)      |
-| `src/database/database.module.ts`         | `persistence/<orm>/core`                                                    |
-| `src/database/database.health.ts`         | `persistence/<orm>/core`                                                    |
-| `src/auth/auth.module.ts`                 | `auth/*`                                                                    |
-| `src/auth/decorators.ts`                  | `auth/*`                                                                    |
-| `src/database/auth-persistence.module.ts` | `persistence/<orm>/auth-<auth>` (imported by that style's `auth.module.ts`) |
-| `src/auth/auth-flows.ts`                  | `pattern/<pattern>/auth-<auth>` (spread into that style's `auth.module.ts`) |
-| `test/support/database.global-setup.ts`   | `database/*` or `persistence/*/core`                                        |
-| `test/support/reset-database.ts`          | `database/*` or `persistence/*/core`                                        |
+| Slot                                      | Provided by                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `tsconfig.json`                           | `layout/*` (the configs differ in how they resolve `@/` and find the mail templates) |
+| `nest-cli.json`                           | `layout/*`                                                                           |
+| `vitest.config.ts`                        | `layout/*`                                                                           |
+| `vitest.config.e2e.ts`                    | `layout/*`                                                                           |
+| `src/bootstrap/create-app.ts`             | `platform/*`                                                                         |
+| `src/config/database.env.ts`              | `database/*`                                                                         |
+| `src/common/validation.ts`                | `validation/*`                                                                       |
+| `src/config/env.schema.ts`                | `validation/*`                                                                       |
+| `src/auth/auth.dto.ts`                    | `validation/*`                                                                       |
+| `src/modules/users/users.dto.ts`          | `validation/*`                                                                       |
+| `src/modules/roles/roles.dto.ts`          | `validation/*`                                                                       |
+| `src/modules/features.module.ts`          | `pattern/<pattern>/core` (imported by `app.module.ts`)                               |
+| `src/seed/seed.ts`                        | `pattern/<pattern>/core` (`db:seed`; `seedDatabase` for the seed test)               |
+| `src/database/database.module.ts`         | `persistence/<orm>/core`                                                             |
+| `src/database/database.health.ts`         | `persistence/<orm>/core`                                                             |
+| `src/auth/auth.module.ts`                 | `auth/*`                                                                             |
+| `src/auth/decorators.ts`                  | `auth/*`                                                                             |
+| `src/database/auth-persistence.module.ts` | `persistence/<orm>/auth-<auth>` (imported by that style's `auth.module.ts`)          |
+| `src/auth/auth-flows.ts`                  | `pattern/<pattern>/auth-<auth>` (spread into that style's `auth.module.ts`)          |
+| `test/support/database.global-setup.ts`   | `database/*` or `persistence/*/core`                                                 |
+| `test/support/reset-database.ts`          | `database/*` or `persistence/*/core`                                                 |
 
 When code starts importing a variant file from another layer, add its path to `REQUIRED_SLOTS`.
+Slots are template paths: in a CQRS project `src/auth/decorators.ts` is written to
+`src/auth/decorators/decorators.ts`, and the `*.dto.ts` slots to the modules' `schemas/`; in a
+flat project `src/modules/users/users.dto.ts` is written to `src/users/users.dto.ts` and
+`src/common/validation.ts` to `src/libs/validation.ts`.
 
 What each validation layer's slots export, with the same names in every library:
 
@@ -112,9 +139,12 @@ from `pattern/<pattern>/auth-<auth>`. `PermissionsModule` only lists a constant,
 In the service pattern the flows are the `AuthService` port (`src/auth/auth.service.ts`, in
 `pattern/service/core`); each `pattern/service/auth-<auth>` layer binds its implementation in
 `auth-flows.ts`. In the CQRS pattern the flows are commands: `pattern/cqrs/core` holds their classes
-(`src/auth/commands/<operation>/<operation>.command.ts`), which `AuthController` dispatches, and each
-`pattern/cqrs/auth-<auth>` layer lists their handlers (`<operation>.handler.ts`, next to the command)
-in `auth-flows.ts`. The e2e suite and `test/support/` seed through the repository ports and
+(`src/auth/commands/impl/<operation>.command.ts`), which `AuthController` dispatches, and each
+`pattern/cqrs/auth-<auth>` layer provides their handlers (`src/auth/commands/handlers/`) and the
+`CommandHandlers` barrel (`handlers/index.ts`) that its `auth-flows.ts` spreads into `providers`.
+The CQRS feature modules follow the same layout: `commands/{impl,handlers}/` and
+`queries/{impl,handlers}/` live in `pattern/cqrs/core` as they appear in the project, and each
+module registers `...CommandHandlers, ...QueryHandlers`. The e2e suite and `test/support/` seed through the repository ports and
 `PasswordHasher`, so they run unchanged against every pattern. Unit specs of a pattern's services or
 handlers live in that pattern's layer.
 
@@ -246,13 +276,13 @@ non-zero on any failure. The matrix dir is `$MATRIX_DIR`, defaulting to `<os tmp
 (outside the repo, for the same reasons as the playground). Output goes to `<matrix dir>/<id>.log`; passing projects are deleted unless
 `--keep` is given.
 
-| Flag               | Effect                                                                                                                         |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `--only <glob>`    | Combos whose id matches, e.g. `--only 'fastify-*-jwt-*'`. Ids are `<platform>-<database>-<orm>-<auth>-<validation>-<pattern>`. |
-| `--subset pr\|all` | `pr`: 20 combos covering every pair of values of any two choices (pairwise). `all` (default): all 240.                         |
-| `--steps <list>`   | Comma-separated subset of `install,typecheck,build,lint,format:check,test,test:e2e`.                                           |
-| `--keep`           | Keep passing projects too.                                                                                                     |
-| `--list`           | Print the ids of the selected, ready combos as a JSON array and run nothing (CI builds its matrix from it).                    |
+| Flag               | Effect                                                                                                                                  |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `--only <glob>`    | Combos whose id matches, e.g. `--only 'fastify-*-jwt-*'`. Ids are `<platform>-<database>-<orm>-<auth>-<validation>-<pattern>-<layout>`. |
+| `--subset pr\|all` | `pr`: 20 combos covering every pair of values of any two choices (pairwise). `all` (default): all 480.                                  |
+| `--steps <list>`   | Comma-separated subset of `install,typecheck,build,lint,format:check,test,test:e2e`.                                                    |
+| `--keep`           | Keep passing projects too.                                                                                                              |
+| `--list`           | Print the ids of the selected, ready combos as a JSON array and run nothing (CI builds its matrix from it).                             |
 
 The selection logic lives in `src/matrix/select.ts`; combos come from `listCombos()` and
 `prSubset()` in `src/options.ts`.

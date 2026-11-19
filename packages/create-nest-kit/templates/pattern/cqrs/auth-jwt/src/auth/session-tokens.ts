@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreateSessionCommand } from '../modules/sessions/commands/create-session/create-session.command.js';
-import { RevokeSessionCommand } from '../modules/sessions/commands/revoke-session/revoke-session.command.js';
-import { TouchSessionCommand } from '../modules/sessions/commands/touch-session/touch-session.command.js';
+import { CreateSessionCommand } from '../modules/sessions/commands/impl/create-session.command.js';
+import { RevokeSessionCommand } from '../modules/sessions/commands/impl/revoke-session.command.js';
+import { TouchSessionCommand } from '../modules/sessions/commands/impl/touch-session.command.js';
 import type { Session } from '../modules/sessions/session.js';
 import { AccessTokens } from './access-tokens.js';
 import { InvalidRefreshTokenException } from './auth.exceptions.js';

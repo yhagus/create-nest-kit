@@ -1,4 +1,5 @@
-import type { Pattern } from '../options.ts';
+import { projectFolder, projectPath } from '../generate/relocate.ts';
+import type { Layout, Pattern } from '../options.ts';
 import type { LayerManifest } from './types.ts';
 
 /** Versions shared by more than one layer. Nest packages move in lockstep. */
@@ -8,13 +9,33 @@ export const TESTCONTAINERS_VERSION = '12.2.1';
 /** What holds the logic behind the controllers, in each application pattern. */
 const MODULE_LOGIC_BY_PATTERN: Record<Pattern, string> = {
   service: 'services',
-  cqrs: 'command and query handlers (`commands/`, `queries/`, one folder per operation)',
+  cqrs: 'command and query handlers (`commands/`, `queries/`)',
 };
 
 /** How that logic is unit-tested, in each application pattern. */
 const UNIT_TESTS_BY_PATTERN: Record<Pattern, string> = {
   service: 'Services are unit-tested against the in-memory repositories in `test/fakes/`.',
   cqrs: 'Command and query handlers are unit-tested through the buses, against the in-memory repositories in `test/fakes/`; `handlerTestingModule()` in `test/support/handler-testing-module.ts` wires them.',
+};
+
+/** Where the feature modules live, in each layout. */
+const FEATURE_MODULE_FOLDERS_BY_LAYOUT: Record<Layout, string> = {
+  nested: '`src/modules/`',
+  flat: '`src/users/`, `src/roles/`, `src/permissions/`, `src/sessions/`',
+};
+
+/** Where the infrastructure modules live, in each layout. */
+const INFRASTRUCTURE_FOLDERS_BY_LAYOUT: Record<Layout, string> = {
+  nested: '`src/infra/`',
+  flat: '`src/logger/`, `src/redis/`, `src/queue/`, `src/mail/`, `src/throttler/`, `src/health/`',
+};
+
+/** How files import each other, in each layout. */
+const IMPORT_RULE_BY_LAYOUT: Record<Layout, string> = {
+  nested: '',
+  flat: `
+Every top-level folder of \`src/\` is a module; \`src/libs/\` holds the code several modules share. An import that leaves its module uses the \`@/\` alias for \`src/\` (\`import { ErrorCode } from '@/libs/error-code.js'\`); an import inside the same module stays relative. Tests import \`src/\` through \`@/\` too. \`paths\` in \`tsconfig.json\` declares the alias, Vitest resolves it with \`resolve.tsconfigPaths\`, and \`nest build\` rewrites it to relative paths in \`dist/\`, so run the code through the Nest CLI or Vitest, not plain Node on the sources.
+`,
 };
 
 export const baseLayer: LayerManifest = {
@@ -182,21 +203,21 @@ export const baseLayer: LayerManifest = {
       body: (options) => `
 - \`src/main.ts\`, \`src/bootstrap/\`: \`createApp()\` builds the app; \`configureApp()\` applies the HTTP pipeline (security headers, CORS, CSRF, prefix, versioning, validation, Swagger)
 - \`src/config/\`: the env schema and the typed \`AppConfig\` accessor
-- \`src/common/\`: \`ErrorCode\`, the global exception filter, request validation, pagination
-- \`src/modules/\`: users, roles, permissions and sessions: controllers, ${MODULE_LOGIC_BY_PATTERN[options.pattern]} and repository ports
+- \`${projectFolder('src/common/error-code.ts', options)}\`: \`ErrorCode\`, the global exception filter, request validation, pagination
+- ${FEATURE_MODULE_FOLDERS_BY_LAYOUT[options.layout]}: users, roles, permissions and sessions: controllers, ${MODULE_LOGIC_BY_PATTERN[options.pattern]} and repository ports
 - \`src/seed/\`: \`db:seed\`: system roles and the first admin
-- \`src/infra/\`: logger, Redis, queues, mail, rate limiting, health checks
+- ${INFRASTRUCTURE_FOLDERS_BY_LAYOUT[options.layout]}: logger, Redis, queues, mail, rate limiting, health checks
 - \`src/database/\`: database module and schema
 - \`src/auth/\`: authentication and authorization
 - \`test/\`: e2e and integration tests, and the harness in \`test/support/\`
-`,
+${IMPORT_RULE_BY_LAYOUT[options.layout]}`,
     },
     {
       title: 'HTTP conventions',
-      body: `
+      body: (options) => `
 - Routes live under \`/api/v1\`. \`/health\` and \`/docs\` sit outside the prefix.
-- Every error body is \`{ statusCode, errorCode, message }\`; \`errorCode\` values are listed in \`src/common/error-code.ts\`. Validation errors add \`details\` with the failing fields: \`[{ field, errors }]\`.
-- Every handler declares exactly one of \`@Public()\`, \`@Authenticated()\` or \`@RequirePermissions(...)\` from \`src/auth/decorators.ts\`. A handler with none is refused: 401 for anonymous callers, 403 for signed-in ones.
+- Every error body is \`{ statusCode, errorCode, message }\`; \`errorCode\` values are listed in \`${projectPath('src/common/error-code.ts', options)}\`. Validation errors add \`details\` with the failing fields: \`[{ field, errors }]\`.
+- Every handler declares exactly one of \`@Public()\`, \`@Authenticated()\` or \`@RequirePermissions(...)\` from \`${projectPath('src/auth/decorators.ts', options)}\`. A handler with none is refused: 401 for anonymous callers, 403 for signed-in ones.
 - Rate limits are per client ip and stored in Redis, so they hold across instances: \`THROTTLE_TTL\` and \`THROTTLE_LIMIT\` for every route, the stricter \`AUTH_THROTTLE_*\` for the routes marked \`@AuthThrottle()\`. Behind a reverse proxy, set \`TRUST_PROXY=true\` so the ip comes from \`X-Forwarded-For\`.
 - With \`CSRF_ENABLED=true\`, browsers can't send state-changing requests from other sites. Origins in \`CORS_ORIGINS\` are trusted.
 - Every request gets an id from the \`x-request-id\` header, or a generated one, and it appears in every log line.
@@ -204,12 +225,12 @@ export const baseLayer: LayerManifest = {
     },
     {
       title: 'Mail and queues',
-      body: `
+      body: (options) => `
 Mail is never sent inside a request. \`MailQueue.enqueue()\` adds a job to the \`mail\` BullMQ queue and \`MailProcessor\` sends it, with BullMQ handling retries.
 
-- A mail is a \`Mailable\` class in \`src/infra/mail/mailables/\`, registered in \`mail-registry.ts\`, with an HTML template in \`src/infra/mail/templates/\`.
+- A mail is a \`Mailable\` class in \`${projectFolder('src/infra/mail/mailables/verify-email.mail.ts', options)}\`, registered in \`mail-registry.ts\`, with an HTML template in \`${projectFolder('src/infra/mail/templates/layout.html', options)}\`.
 - \`MAIL_TRANSPORT\` picks the transport: \`smtp\` (Mailpit in development, UI at http://localhost:8025), \`resend\` or \`log\`.
-- The \`maintenance\` queue runs a daily job that purges expired data: every provider decorated with \`@ExpiredDataPurger()\` (\`src/infra/queue/expired-data-purger.ts\`).
+- The \`maintenance\` queue runs a daily job that purges expired data: every provider decorated with \`@ExpiredDataPurger()\` (\`${projectPath('src/infra/queue/expired-data-purger.ts', options)}\`).
 `,
     },
     {

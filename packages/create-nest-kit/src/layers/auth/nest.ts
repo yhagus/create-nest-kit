@@ -1,10 +1,11 @@
+import { projectPath } from '../../generate/relocate.ts';
 import type { Pattern } from '../../options.ts';
 import type { LayerManifest } from '../types.ts';
 
 /** Where the `/auth` flows live, in each application pattern. */
 const FLOWS_BY_PATTERN: Record<Pattern, string> = {
   service: '`src/auth/nest-auth.service.ts` implements the `AuthService` port behind `/auth`',
-  cqrs: 'The handlers of the `/auth` commands, in `src/auth/commands/<operation>/`, run the flows',
+  cqrs: 'The handlers of the `/auth` commands, in `src/auth/commands/handlers/`, run the flows',
 };
 
 export const nestAuthLayer: LayerManifest = {
@@ -24,7 +25,7 @@ export const nestAuthLayer: LayerManifest = {
 - Access tokens are JWTs carrying the user (\`sub\`) and the device session (\`sid\`), valid for \`ACCESS_TOKEN_TTL\`. \`AccessTokenProvider\` checks them on every route that is not \`@Public()\`, including the Redis deny-list of revoked sessions.
 - Refresh tokens are opaque and single use; each refresh rotates them, and presenting a rotated one revokes the session. Each token row records its session (\`auth_refresh_tokens.session_id\`), so revoking a session revokes its tokens.
 - Device sessions live in \`sessions\`, as in every auth style. The package's own cookie-session table (\`auth_sessions\`) stays empty: password reset needs it to exist.
-- Authorization is deny by default (\`@nestjs/authorization\`): \`@Authenticated()\` is \`@Can.Anyone()\`, and \`@RequirePermissions(...)\` is \`@Can(PermissionPolicy, 'has', ...)\` (\`src/auth/permission.policy.ts\`).
+- Authorization is deny by default (\`@nestjs/authorization\`): \`@Authenticated()\` is \`@Can.Anyone()\`, and \`@RequirePermissions(...)\` is \`@Can(PermissionPolicy, 'has', ...)\` (\`${projectPath('src/auth/permission.policy.ts', options)}\`).
 - The stores are registered in \`src/database/auth-persistence.module.ts\`; \`test/contracts/\` holds their spec.
 `,
     },

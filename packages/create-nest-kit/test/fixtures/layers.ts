@@ -33,6 +33,11 @@ export const fixtureLayers: LayerManifest[] = [
     readme: [{ title: 'Architecture', body: 'Shared code lives in `src/`.' }],
   },
   {
+    id: 'layout/nested',
+    status: 'ready',
+    when: (options) => options.layout === 'nested',
+  },
+  {
     id: 'platform/fastify',
     status: 'ready',
     when: (options) => options.platform === 'fastify',

@@ -1,20 +1,39 @@
-import { copyFile, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { mergeManifests, type MergedManifest } from '../layers/merge.ts';
 import { resolveLayers } from '../layers/resolve.ts';
 import type { LayerManifest, LayerSet } from '../layers/types.ts';
-import type { ProjectOptions } from '../options.ts';
+import type { Layout, ProjectOptions } from '../options.ts';
 import { REQUIRED_SLOTS } from '../slots.ts';
+import { projectPath } from './relocate.ts';
 import { renderAggregateFiles, type RenderedFile } from './render.ts';
+import { rewriteRelativeImports, type ImportStyle } from './rewrite-imports.ts';
 
-/** A template file copied verbatim into the project. */
+/** A template file copied into the project: verbatim, or with its relative imports relocated. */
 export interface TemplateFile {
   /** Path inside the generated project, with `/` separators. */
   target: string;
   /** Absolute path of the template on disk. */
   source: string;
   layerId: string;
+  /** The content to write instead of copying `source`, when relocation changed its imports. */
+  content?: string;
 }
+
+/** Source and test files, whose relative imports follow the files they import. */
+const IMPORTING_FILE = /^(src|test)\/.*\.ts$/;
+
+/**
+ * Folders a tool fills after generation (the Prisma client, by `prisma generate`). Imports into
+ * them are valid although no layer provides the file.
+ */
+const TOOL_GENERATED_DIRS = ['src/generated/'];
+
+/** The flat layout imports across modules through the `@/` alias its tsconfig.json declares. */
+const IMPORT_STYLE_BY_LAYOUT: Record<Layout, ImportStyle> = {
+  nested: 'relative',
+  flat: 'alias-across-modules',
+};
 
 /** Everything a project consists of, before anything is written. */
 export interface ProjectPlan {
@@ -51,18 +70,58 @@ export async function composeProject(
   const filesPerLayer = await Promise.all(
     layers.map((layer) => listTemplateFiles(layer.id, layerSet.templatesDir)),
   );
-  const templateFiles = filesPerLayer.flat();
+  const layoutFiles = filesPerLayer.flat();
   const manifest = mergeManifests(layers, options);
   const renderedFiles = renderAggregateFiles(options, manifest);
 
-  const ownedPaths = [
-    ...templateFiles,
-    ...renderedFiles.map((file) => ({ target: file.target, layerId: GENERATOR_OWNER })),
-  ];
-  const problems = findCompositionProblems(ownedPaths, slots);
+  const renderedPaths = renderedFiles.map((file) => ({
+    target: file.target,
+    layerId: GENERATOR_OWNER,
+  }));
+  const problems = findCompositionProblems([...layoutFiles, ...renderedPaths], slots);
   if (problems.length > 0) throw new CompositionError(problems);
 
+  const templateFiles = await relocateTemplateFiles(layoutFiles, options);
+  const relocationProblems = findCompositionProblems([...templateFiles, ...renderedPaths], []);
+  if (relocationProblems.length > 0) throw new CompositionError(relocationProblems);
+
   return { layers, templateFiles, renderedFiles, manifest };
+}
+
+/**
+ * Moves files from the templates' layout to the project's (see relocate.ts) and points the
+ * relative imports of source and test files at the moved files, in the layout's import style.
+ * Throws on an import of a file no layer provides.
+ */
+async function relocateTemplateFiles(
+  files: readonly TemplateFile[],
+  options: ProjectOptions,
+): Promise<TemplateFile[]> {
+  const projectPathByTemplatePath = new Map(
+    files.map((file) => [file.target, projectPath(file.target, options)]),
+  );
+  const projectPathOf = (templatePath: string) => {
+    const provided = projectPathByTemplatePath.get(templatePath);
+    if (provided !== undefined) return provided;
+    const isToolGenerated = TOOL_GENERATED_DIRS.some((dir) => templatePath.startsWith(dir));
+    return isToolGenerated ? projectPath(templatePath, options) : undefined;
+  };
+
+  return Promise.all(
+    files.map(async (file) => {
+      const target = projectPath(file.target, options);
+      if (!IMPORTING_FILE.test(file.target)) return { ...file, target };
+
+      const original = await readFile(file.source, 'utf8');
+      const content = rewriteRelativeImports(
+        original,
+        { templatePath: file.target, projectPath: target },
+        projectPathOf,
+        IMPORT_STYLE_BY_LAYOUT[options.layout],
+      );
+      return content === original ? { ...file, target } : { ...file, target, content };
+    }),
+  );
 }
 
 /** Lists a layer's template files. A layer without a template folder simply has no files. */
@@ -140,7 +199,8 @@ export function findCompositionProblems(
 export async function writeProject(plan: ProjectPlan, targetDir: string): Promise<void> {
   for (const file of plan.templateFiles) {
     const destination = await prepareDestination(targetDir, file.target);
-    await copyFile(file.source, destination);
+    if (file.content === undefined) await copyFile(file.source, destination);
+    else await writeFile(destination, file.content);
   }
   for (const file of plan.renderedFiles) {
     const destination = await prepareDestination(targetDir, file.target);

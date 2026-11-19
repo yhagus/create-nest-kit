@@ -1,3 +1,4 @@
+import { projectFolder } from '../../../generate/relocate.ts';
 import type { LayerManifest } from '../../types.ts';
 
 /** The @mikro-orm/* packages pin each other's exact version, so they move in lockstep. */
@@ -39,9 +40,9 @@ export const mikroormCoreLayer: LayerManifest = {
   readme: [
     {
       title: 'Database (MikroORM)',
-      body: `
+      body: (options) => `
 - Entities live in \`src/database/entities/\` (\`*.entity.ts\`), with the legacy decorators from \`@mikro-orm/decorators/legacy\`. Every property states its \`type\`, since nothing reads TypeScript's types at runtime; columns are snake_case (MikroORM's default naming), and constraints and indexes are named explicitly.
-- The repositories in \`src/database/repositories/\` implement the ports in \`src/modules/*/\`. Each method runs on its own \`em.fork()\`, so it works the same inside and outside an HTTP request, and writes are single conditional statements (\`nativeUpdate\`, \`nativeDelete\`, the query builder with \`returning\`). \`src/database/database.module.ts\` binds them; register a new entity with \`MikroOrmModule.forFeature()\` in the module that uses it.
+- The repositories in \`src/database/repositories/\` implement the ports in \`${projectFolder('src/modules/*/users.repository.ts', options)}\`. Each method runs on its own \`em.fork()\`, so it works the same inside and outside an HTTP request, and writes are single conditional statements (\`nativeUpdate\`, \`nativeDelete\`, the query builder with \`returning\`). \`src/database/database.module.ts\` binds them; register a new entity with \`MikroOrmModule.forFeature()\` in the module that uses it.
 - After changing an entity, write a migration from the difference between the entities and the database, then apply it:
   \`db:migration:create -- --name <Name>\`, then \`db:migrate\`. Both build the project first, because the MikroORM CLI reads the compiled files in \`dist/\` through \`src/mikro-orm.config.ts\`. New migrations are written to \`src/database/migrations/\`.
 - Migrations never run on start-up. The test setup runs every file in \`src/database/migrations/\`.

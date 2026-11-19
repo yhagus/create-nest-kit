@@ -112,6 +112,7 @@ Generated with [create-nest-kit](https://www.npmjs.com/package/create-nest-kit).
 | Auth style          | Hand-rolled @nestjs/jwt + argon2id |
 | Validation library  | Zod                                |
 | Application pattern | Controller + service               |
+| Folder layout       | Nested                             |
 | Email verification  | on                                 |
 | CSRF protection     | on                                 |
 | Package manager     | pnpm                               |
