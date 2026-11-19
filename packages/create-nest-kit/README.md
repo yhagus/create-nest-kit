@@ -5,10 +5,10 @@ ORM, the auth style and the validation library; every combination generates the 
 [HTTP contract](https://github.com/yhagus/create-nest-kit/blob/main/docs/contract.md).
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh | sh
+curl -fsSL https://github.com/yhagus/create-nest-kit/releases/latest/download/install.sh | sh
 ```
 
-Not published to npm yet; the installer downloads the CLI from the GitHub Release.
+Not published to npm; the installer and the CLI both come from the [latest GitHub Release](https://github.com/yhagus/create-nest-kit/releases/latest).
 
 ## Where your project goes
 
@@ -19,7 +19,7 @@ The project is created **inside the folder you run the command from**:
 
 ```sh
 cd ~/code/apps
-INSTALL=https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh
+INSTALL=https://github.com/yhagus/create-nest-kit/releases/latest/download/install.sh
 curl -fsSL $INSTALL | sh                     # asks for a name, e.g. billing-api → ~/code/apps/billing-api
 curl -fsSL $INSTALL | sh -s -- billing-api   # same folder, without asking for the name
 curl -fsSL $INSTALL | sh -s -- .             # uses ~/code/apps itself (asks first if it isn't empty)
@@ -65,7 +65,7 @@ MongoDB works only with Mongoose; the SQL ORMs only with PostgreSQL. Any option 
 not asked for, and `--yes` takes the defaults for the rest:
 
 ```sh
-INSTALL=https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh
+INSTALL=https://github.com/yhagus/create-nest-kit/releases/latest/download/install.sh
 curl -fsSL $INSTALL | sh -s -- my-api --yes --platform express --orm prisma --auth nest
 curl -fsSL $INSTALL | sh -s -- my-api --yes --db mongodb --no-csrf
 curl -fsSL $INSTALL | sh -s -- my-api --yes --dry-run   # show the plan, write nothing
