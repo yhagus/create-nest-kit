@@ -2,11 +2,13 @@
 # Installer for create-nest-kit: checks the requirements, downloads the CLI from the GitHub Release,
 # verifies its checksum and runs it. Arguments are passed on to the CLI:
 #
-#   curl -fsSL https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh | sh
-#   curl -fsSL https://raw.githubusercontent.com/yhagus/create-nest-kit/main/install.sh | sh -s -- my-api --yes
+#   curl -fsSL https://github.com/yhagus/create-nest-kit/releases/latest/download/install.sh | sh
+#   curl -fsSL https://github.com/yhagus/create-nest-kit/releases/latest/download/install.sh | sh -s -- my-api --yes
+#
+# A pinned version: https://github.com/yhagus/create-nest-kit/releases/download/vX.Y.Z/install.sh
 #
 # Environment:
-#   NEST_KIT_VERSION       release tag to install, e.g. v0.1.0 (default: the latest release)
+#   NEST_KIT_VERSION       release tag to install, e.g. v0.1.0 (default: DEFAULT_VERSION below)
 #   NEST_KIT_DOWNLOAD_URL  base URL of the release assets, replacing GitHub (used by tests; file:// works)
 #
 # Everything runs inside main(), called on the last line, so a truncated download runs nothing.
@@ -16,6 +18,9 @@ set -eu
 REPO="yhagus/create-nest-kit"
 MIN_NODE="24.15.0"
 ARCHIVE="create-nest-kit.tar.gz"
+# Release tag installed when NEST_KIT_VERSION is unset; empty means the latest release. The copy
+# attached to each GitHub Release has its own tag stamped here by scripts/pack-release.ts.
+DEFAULT_VERSION=""
 
 say() {
   printf '%s\n' "$*" >&2
@@ -128,10 +133,11 @@ sha256_of() {
 }
 
 release_url() {
+  version=${NEST_KIT_VERSION:-$DEFAULT_VERSION}
   if [ -n "${NEST_KIT_DOWNLOAD_URL:-}" ]; then
     printf '%s\n' "${NEST_KIT_DOWNLOAD_URL%/}"
-  elif [ -n "${NEST_KIT_VERSION:-}" ]; then
-    printf '%s\n' "https://github.com/$REPO/releases/download/$NEST_KIT_VERSION"
+  elif [ -n "$version" ]; then
+    printf '%s\n' "https://github.com/$REPO/releases/download/$version"
   else
     printf '%s\n' "https://github.com/$REPO/releases/latest/download"
   fi

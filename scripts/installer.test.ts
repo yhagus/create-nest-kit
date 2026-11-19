@@ -1,5 +1,6 @@
 // End-to-end tests of install.sh: shellcheck, then the installer in Docker containers against the
-// archive in release/ (mounted read-only, downloaded through NEST_KIT_DOWNLOAD_URL=file://...).
+// archive in release/ (mounted read-only, downloaded through NEST_KIT_DOWNLOAD_URL=file://...), and
+// the default version stamped into the release copy, release/install.sh.
 // Run with `pnpm test:installer`, which builds and packs first. Needs Docker; shellcheck runs from
 // its Docker image when the binary is not installed.
 import { execFile } from 'node:child_process';
@@ -9,7 +10,7 @@ import path from 'node:path';
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { ARCHIVE_NAME, RELEASE_DIR } from './pack-release.ts';
+import { ARCHIVE_NAME, INSTALLER_NAME, RELEASE_DIR } from './pack-release.ts';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
 const INSTALL_SCRIPT = path.join(ROOT, 'install.sh');
@@ -39,12 +40,17 @@ function runCommand(command: string, args: string[]): Promise<CommandResult> {
 
 /**
  * Runs `script` with sh in a fresh `image`, with install.sh at /install.sh and release/ at /release,
- * and NEST_KIT_DOWNLOAD_URL pointing at /release.
+ * and NEST_KIT_DOWNLOAD_URL pointing at /release. `dockerArgs` go before the image name.
  */
-function runInContainer(image: string, script: string): Promise<CommandResult> {
+function runInContainer(
+  image: string,
+  script: string,
+  dockerArgs: string[] = [],
+): Promise<CommandResult> {
   return runCommand('docker', [
     'run',
     '--rm',
+    ...dockerArgs,
     '--volume',
     `${INSTALL_SCRIPT}:/install.sh:ro`,
     '--volume',
@@ -150,6 +156,36 @@ describe('install.sh', () => {
       assert.match(result.stderr, /needs Node\.js 24\.15\.0 or newer, but this is Node\.js 22\./);
     },
   );
+});
+
+describe('release/install.sh', () => {
+  // Without a network the download fails right after the installer prints the URL it tried.
+  const OFFLINE = ['--network', 'none'];
+  const RUN_RELEASE_COPY = `unset NEST_KIT_DOWNLOAD_URL; sh /release/${INSTALLER_NAME} --yes`;
+
+  it('downloads its own release by default', { timeout: SCENARIO_TIMEOUT_MS }, async () => {
+    const packageJson: unknown = JSON.parse(await readFile(PACKAGE_JSON, 'utf8'));
+    assert.ok(typeof packageJson === 'object' && packageJson !== null && 'version' in packageJson);
+
+    const result = await runInContainer('node:24', RUN_RELEASE_COPY, OFFLINE);
+
+    assert.ok(
+      result.stderr.includes(
+        `${DOWNLOADING} https://github.com/yhagus/create-nest-kit/releases/download/v${String(packageJson.version)}/${ARCHIVE_NAME}`,
+      ),
+      result.stderr,
+    );
+  });
+
+  it('downloads NEST_KIT_VERSION when it is set', { timeout: SCENARIO_TIMEOUT_MS }, async () => {
+    const result = await runInContainer(
+      'node:24',
+      `export NEST_KIT_VERSION=v9.9.9; ${RUN_RELEASE_COPY}`,
+      OFFLINE,
+    );
+
+    assert.ok(result.stderr.includes('/releases/download/v9.9.9/'), result.stderr);
+  });
 });
 
 describe('release archive', () => {
