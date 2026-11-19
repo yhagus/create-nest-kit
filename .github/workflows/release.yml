@@ -1,6 +1,11 @@
-# On a pushed tag vX.Y.Z: runs the full matrix (every combo, ADR 0005), checks everything, packs
-# the CLI and publishes a GitHub Release with create-nest-kit.tar.gz and its .sha256, the assets
-# install.sh downloads. Nothing goes to npm.
+# On a pushed tag vX.Y.Z:
+#   1. checks the tag against packages/create-nest-kit/package.json and CHANGELOG.md, before
+#      anything slow runs
+#   2. runs the full matrix (every combo, ADR 0005)
+#   3. checks everything, packs the CLI and publishes a GitHub Release whose text is the CHANGELOG
+#      section of this version, with create-nest-kit.tar.gz and its .sha256 (the assets install.sh
+#      downloads) and install.sh itself, stamped to install this version by default.
+# Nothing goes to npm. See docs/agents/releasing.md.
 name: Release
 
 on:
@@ -12,12 +17,38 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
+  version:
+    name: Check the version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: version
+        name: Check the tag against package.json and the CHANGELOG
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          file=packages/create-nest-kit/package.json
+          declared="$(jq -r .version "$file")"
+          if [ "$declared" != "$version" ]; then
+            echo "::error file=$file::version is $declared, but the tag is $GITHUB_REF_NAME"
+            exit 1
+          fi
+          if ! grep -qE "^# v${version//./\\.}( |$)" CHANGELOG.md; then
+            echo "::error file=CHANGELOG.md::no '# v$version' section"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* ]]; then echo "prerelease=true"; else echo "prerelease=false"; fi >> "$GITHUB_OUTPUT"
+
   # GitHub caps one matrix at 256 jobs, so the 480 combos run as two halves.
   matrix-nested:
     name: Matrix (nested)
+    needs: version
     uses: ./.github/workflows/matrix.yml
     with:
       subset: all
@@ -25,6 +56,7 @@ jobs:
 
   matrix-flat:
     name: Matrix (flat)
+    needs: version
     uses: ./.github/workflows/matrix.yml
     with:
       subset: all
@@ -32,8 +64,10 @@ jobs:
 
   release:
     name: Publish ${{ github.ref_name }}
-    needs: [matrix-nested, matrix-flat]
+    needs: [version, matrix-nested, matrix-flat]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
@@ -41,20 +75,33 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
-      - name: Check the tag matches the package version
+      - run: node scripts/pack-release.ts
+      - name: Check release/install.sh installs this version by default
         run: |
-          version=$(node -p "require('./packages/create-nest-kit/package.json').version")
-          if [ "$TAG" != "v$version" ]; then
-            echo "::error::Tag $TAG does not match packages/create-nest-kit/package.json version $version"
+          if ! grep -qxF "DEFAULT_VERSION=\"$GITHUB_REF_NAME\"" release/install.sh; then
+            echo "::error::release/install.sh does not default to $GITHUB_REF_NAME"
             exit 1
           fi
-        env:
-          TAG: ${{ github.ref_name }}
-      - run: node scripts/pack-release.ts
-      - name: Smoke-test install.sh against the packed archive
-        run: NEST_KIT_DOWNLOAD_URL="file://$PWD/release" sh install.sh smoke-api --yes --dry-run
+      - name: Smoke-test release/install.sh against the packed archive
+        run: NEST_KIT_DOWNLOAD_URL="file://$PWD/release" sh release/install.sh smoke-api --yes --dry-run
       - name: Create the GitHub Release
-        run: gh release create "$TAG" release/* --generate-notes --title "$TAG"
+        run: |
+          # The CHANGELOG section of this version, without its heading. Kept outside release/,
+          # whose files are all attached.
+          awk -v heading="# v$VERSION" '
+            $0 == heading || index($0, heading " ") == 1 { found = 1; next }
+            found && /^# / { exit }
+            found { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          prerelease_flag=()
+          if [ "$PRERELEASE" = true ]; then prerelease_flag=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" \
+            --title "create-nest-kit $GITHUB_REF_NAME" \
+            --notes-file "$RUNNER_TEMP/notes.md" \
+            --verify-tag \
+            "${prerelease_flag[@]}" \
+            release/*
         env:
-          TAG: ${{ github.ref_name }}
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
