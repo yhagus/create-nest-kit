@@ -85,7 +85,7 @@ function sectionOf(heading: string, commits: Commit[], repository: string): stri
     const scope = commit.scope ?? UNSCOPED;
     commitsByScope.set(scope, [...(commitsByScope.get(scope) ?? []), commit]);
   }
-  const scopes = [...commitsByScope.keys()].sort((a, b) => a.localeCompare(b));
+  const scopes = [...commitsByScope.keys()].toSorted((a, b) => a.localeCompare(b));
   return [
     `#### ${heading}`,
     ...scopes.flatMap((scope) => [
