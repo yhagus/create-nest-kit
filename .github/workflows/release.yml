@@ -1,5 +1,6 @@
-# On a pushed tag vX.Y.Z: checks everything, packs the CLI and publishes a GitHub Release with
-# create-nest-kit.tar.gz and its .sha256, the assets install.sh downloads. Nothing goes to npm.
+# On a pushed tag vX.Y.Z: runs the full matrix (every combo, ADR 0005), checks everything, packs
+# the CLI and publishes a GitHub Release with create-nest-kit.tar.gz and its .sha256, the assets
+# install.sh downloads. Nothing goes to npm.
 name: Release
 
 on:
@@ -14,8 +15,24 @@ permissions:
   contents: write
 
 jobs:
+  # GitHub caps one matrix at 256 jobs, so the 480 combos run as two halves.
+  matrix-nested:
+    name: Matrix (nested)
+    uses: ./.github/workflows/matrix.yml
+    with:
+      subset: all
+      only: '*-nested'
+
+  matrix-flat:
+    name: Matrix (flat)
+    uses: ./.github/workflows/matrix.yml
+    with:
+      subset: all
+      only: '*-flat'
+
   release:
     name: Publish ${{ github.ref_name }}
+    needs: [matrix-nested, matrix-flat]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
