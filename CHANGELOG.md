@@ -1,3 +1,43 @@
+# v2.0.0 (2026-11-20)
+
+Generated projects keep only feature tests: every test drives the app from outside and runs against real services.
+
+#### Notable changes
+
+**Upgrade**
+* **Breaking:** generated projects keep their tests in `tests/<feature>/<scenario>.test.ts` instead of `test/`. The `test:e2e` script and `vitest.config.e2e.ts` are gone; `test` runs everything and needs Docker – [d425a5c](https://github.com/yhagus/create-nest-kit/commit/d425a5c0e63b095a6eac8531875f290dd6ba929c)
+* **Breaking:** generated projects no longer ship unit specs (`src/**/*.spec.ts`), in-memory fakes or per-ORM contract suites. Behaviour those covered is tested through the HTTP API, `db:migrate`, `db:seed` or booting the app where it can be reached from outside (ADR 0006) – [d425a5c](https://github.com/yhagus/create-nest-kit/commit/d425a5c0e63b095a6eac8531875f290dd6ba929c)
+* Existing projects are not affected: a generated project has no dependency on create-nest-kit. To pin v1 for new projects, use `https://github.com/yhagus/create-nest-kit/releases/download/v1.0.0/install.sh`.
+
+**Feature tests**
+* Mail is checked through a real Mailpit container, read back over its HTTP API; the in-memory mail transport that only tests used is removed from `MailModule` – [d425a5c](https://github.com/yhagus/create-nest-kit/commit/d425a5c0e63b095a6eac8531875f290dd6ba929c)
+* New scenarios cover what the removed unit tests used to: concurrent registration, refresh and role creation, `%` and `_` in user search, invalid env refusing to boot, `db:seed` creating and re-running, the 500 body hiding its message, and more – [d425a5c](https://github.com/yhagus/create-nest-kit/commit/d425a5c0e63b095a6eac8531875f290dd6ba929c)
+* The global setup migrates the test database with the project's own `db:migrate` script – [d425a5c](https://github.com/yhagus/create-nest-kit/commit/d425a5c0e63b095a6eac8531875f290dd6ba929c)
+
+**Installer**
+* The installer's own tests run the built CLI from outside, including the wizard through a pseudo-terminal, and generate all 480 combos on every run – [26df3f6](https://github.com/yhagus/create-nest-kit/commit/26df3f6c8714c198d4a4dce4eaacbc041cd1b617)
+
+**Docs**
+* ADR 0006 records the feature-tests-only decision; ADR 0004 and the glossary follow it – [219e8fc](https://github.com/yhagus/create-nest-kit/commit/219e8fc328efe87c4a5ed69f29352a9d7f0bcfdd)
+
+#### Features
+* `templates`
+  * [d425a5c](https://github.com/yhagus/create-nest-kit/commit/d425a5c0e63b095a6eac8531875f290dd6ba929c) feat(templates): keep only feature tests in generated projects (**breaking**)
+
+#### Bug fixes
+* `templates`
+  * [42e84d9](https://github.com/yhagus/create-nest-kit/commit/42e84d9db95d1bfe2e9a7b88a5696eb1754ff1a1) fix(templates): accept reuse detection in the concurrent refresh test
+
+#### Docs
+* `adr`
+  * [219e8fc](https://github.com/yhagus/create-nest-kit/commit/219e8fc328efe87c4a5ed69f29352a9d7f0bcfdd) docs(adr): keep only feature tests in the installer and generated projects
+
+#### Tests
+* `installer`
+  * [26df3f6](https://github.com/yhagus/create-nest-kit/commit/26df3f6c8714c198d4a4dce4eaacbc041cd1b617) test(installer): replace unit tests with feature tests in tests/
+
+**Full Changelog**: https://github.com/yhagus/create-nest-kit/compare/v1.0.0...v2.0.0
+
 # v1.0.0 (2026-11-20)
 
 The first stable release. The wizard's options, the HTTP contract every combo serves and the layout of generated projects are now stable: a breaking change to any of them means a new major version.
