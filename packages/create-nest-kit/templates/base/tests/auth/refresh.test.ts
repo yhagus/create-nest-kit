@@ -106,6 +106,13 @@ describe('POST /auth/refresh', () => {
       request(testApp, 'POST /auth/refresh', { body: { refreshToken } }),
     ]);
 
-    expect(responses.map((response) => response.status).toSorted()).toEqual([200, 401]);
+    // At most one request rotates the token. The other sees it already rotated away, which is
+    // reuse: it revokes the session, so the winner may be refused too if that lands first.
+    const statuses = responses.map((response) => response.status).toSorted();
+    expect([
+      [200, 401],
+      [401, 401],
+    ]).toContainEqual(statuses);
+    await expectRefreshTokenRefused(testApp, refreshToken);
   });
 });
