@@ -179,21 +179,23 @@ curl -fsSL $INSTALL | sh -s -- my-api --yes --dry-run
 
 This repository is a pnpm workspace:
 
-| Path                        | Contents                                                      |
-| --------------------------- | ------------------------------------------------------------- |
-| `packages/create-nest-kit/` | the CLI: engine in `src/`, templates in `templates/`          |
-| `install.sh`                | the curl installer                                            |
-| `scripts/`                  | the matrix, smoke tests, release packing and release notes    |
-| `docs/layers.md`            | how layers, slots, manifests and relocation work              |
-| `docs/contract.md`          | the HTTP contract every generated project serves              |
-| `docs/adr/`, `GLOSSARY.md`  | the decisions behind the design, and the project's vocabulary |
-| `docs/agents/releasing.md`  | how to cut a release                                          |
-| `.github/workflows/`        | CI on every push to `main`, and the release                   |
+| Path                        | Contents                                                                |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `packages/create-nest-kit/` | the CLI: engine in `src/`, templates in `templates/`, tests in `tests/` |
+| `install.sh`                | the curl installer                                                      |
+| `scripts/`                  | the matrix, smoke tests, release packing and release notes              |
+| `docs/layers.md`            | how layers, slots, manifests and relocation work                        |
+| `docs/contract.md`          | the HTTP contract every generated project serves                        |
+| `docs/adr/`, `GLOSSARY.md`  | the decisions behind the design, and the project's vocabulary           |
+| `docs/agents/releasing.md`  | how to cut a release                                                    |
+| `.github/workflows/`        | CI on every push to `main`, and the release                             |
 
 ```sh
 pnpm install
 pnpm build && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test
 ```
+
+The installer's tests are feature tests ([ADR 0006](docs/adr/0006-feature-tests-only.md)) in `packages/create-nest-kit/tests/<feature>/<scenario>.test.ts`, with helpers in `tests/support/`. Each runs the built `dist/cli.js` in a temporary folder, the wizard through a pseudo-terminal (`@lydell/node-pty`), and asserts the exit code, the output and the files written; `tests/combos/` generates every ready combo. They never import from `src/`.
 
 ### Layers and slots
 
@@ -206,7 +208,7 @@ Templates are written once, in the nested service layout; relocation maps each f
 1. Write the manifest in `packages/create-nest-kit/src/layers/<kind>/<name>.ts` with `status: 'planned'`, and add it to `LAYERS` in `src/layers/registry.ts` at its place in the order. A new option value (say, another ORM) also goes into the lists in `src/options.ts`, the labels in `src/labels.ts` and the help text in `src/help.ts`.
 2. Put its files in `templates/<layer id>/`. Spell dotfiles with `_` (`_gitignore`), provide the slots the layer owns, and touch no other layer's files.
 3. Iterate on a generated copy outside the repo (see "Working on templates" in `docs/layers.md`).
-4. Set `status: 'ready'`. The wizard enables the combos whose layers are all ready, `test/layers/coverage.test.ts` starts composing them, and the matrix starts running them.
+4. Set `status: 'ready'`. The wizard enables the combos whose layers are all ready, `tests/combos/every-combo.test.ts` starts generating them, and the matrix starts running them.
 5. Run the matrix for the new combos, e.g. `pnpm matrix --only '*-prisma-*'`.
 
 ### The matrix
@@ -239,7 +241,7 @@ node scripts/smoke.ts dev --type fullstack          # --dev-env docker's contain
 `pnpm build` bundles the CLI with esbuild into `dist/cli.js` (the Node.js version check) and `dist/run.js` (everything else, dependencies inlined), so the release archive runs with plain `node`. `pnpm pack:release` writes the release assets into `release/`.
 
 ```sh
-pnpm test:installer   # build, pack, shellcheck, then install.sh in Docker (node:24, node:22, no Node, alpine, tampered archive)
+pnpm test:installer   # build, pack, then packages/create-nest-kit/tests/installer/: shellcheck and install.sh in Docker (node:24, node:22, no Node, alpine, tampered archive)
 NEST_KIT_DOWNLOAD_URL=file://$PWD/release sh install.sh ../nk-try --yes --no-install --no-git
 ```
 

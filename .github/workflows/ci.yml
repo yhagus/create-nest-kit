@@ -30,7 +30,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup
-      # Builds, packs release/ and runs scripts/installer.test.ts; the runner has shellcheck and Docker.
+      # Builds, packs release/ and runs packages/create-nest-kit/tests/installer/; the runner has
+      # shellcheck and Docker.
       - run: pnpm test:installer
 
   matrix:

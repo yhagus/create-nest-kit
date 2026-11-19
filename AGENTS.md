@@ -19,6 +19,7 @@ How layers compose, and how template paths map to project paths (relocation, `@/
 ## Checks
 
 - Fast: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm -r test`
+- install.sh: `pnpm test:installer` (`packages/create-nest-kit/tests/installer/`; needs Docker)
 - Generated projects: `pnpm matrix --only '<combo id>'` (ids are `platform-database-orm-auth-validation-pattern-layout`; needs Docker for the generated project's `test`)
 
 ## Releasing

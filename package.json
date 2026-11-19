@@ -15,7 +15,7 @@
     "format:check": "prettier --check .",
     "matrix": "pnpm build && node scripts/matrix.ts",
     "pack:release": "node scripts/pack-release.ts",
-    "test:installer": "pnpm build && node scripts/pack-release.ts && node --test scripts/installer.test.ts"
+    "test:installer": "pnpm build && node scripts/pack-release.ts && pnpm --filter create-nest-kit test:installer"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

@@ -68,8 +68,8 @@ template files plus a TypeScript **manifest**. Everything below lives in
 - Templates are not type-checked or linted by the installer. The matrix checks them inside each
   generated project.
 - Templates and rendered files must pass the project's `format:check` (`templates/base/_prettierrc`
-  and `_prettierignore`); `test/generate/formatting.test.ts` checks them in `pnpm test`. The root
-  `.prettierrc` is kept identical, so the repo's `pnpm format` and editors format templates
+  and `_prettierignore`); `tests/combos/every-combo.test.ts` checks every generated combo in
+  `pnpm test`. The root `.prettierrc` is kept identical (`tests/formatting/` checks that), so the repo's `pnpm format` and editors format templates
   correctly. Files written by ORM tooling (migrations, Prisma's client) are ignored in both.
 
 ## Slots
@@ -230,10 +230,11 @@ complete. A combo is available only when all seven of its layers are `ready`:
 - the CLI refuses a combo with planned layers, naming them;
 - `scripts/matrix.ts` and the coverage test skip it.
 
-`test/layers/coverage.test.ts` composes every combo whose layers are all ready and fails on any
-collision, unfilled slot or manifest conflict. It passes vacuously until layers become ready, then
-covers each new combo automatically. `test/layers/registry.test.ts` checks that every dependency
-in every manifest is pinned exactly.
+`tests/combos/every-combo.test.ts` generates every combo whose layers are all ready (the list
+`node scripts/matrix.ts --list` prints) with the built CLI, and fails on any collision, unfilled
+slot or manifest conflict, and on a broken CQRS, flat-layout or formatting rule. It covers each
+new combo as soon as its layers are ready. `tests/options/project-type.test.ts` checks that every
+dependency of a generated project is pinned exactly.
 
 ## Feature tests
 
@@ -275,10 +276,11 @@ whole check for one or more combos, use the matrix (below) with `--only` and `--
 `dist/`, so `src/paths.ts` finds `../templates/` and `../package.json` as before. `tsc` only
 type-checks.
 
-Engine tests use the fixture layers in `test/fixtures/layers.ts` (templates in
-`test/fixtures/templates/`), not the real ones. The built CLI can be pointed at another layer set
-with the test-only env var `NEST_KIT_LAYER_SET_MODULE=<path to a module exporting layerSet>`;
-`test/cli.test.ts` uses it to run `dist/cli.js` end to end.
+The installer's own tests are feature tests too (ADR 0006), in `packages/create-nest-kit/tests/`:
+each runs the built `dist/cli.js` in a temporary folder (the wizard through a pseudo-terminal) and
+asserts the exit code, the output and the files written. The built CLI can still be pointed at
+another layer set with the env var `NEST_KIT_LAYER_SET_MODULE=<path to a module exporting
+layerSet>`; no test uses it any more.
 
 ## Matrix
 
