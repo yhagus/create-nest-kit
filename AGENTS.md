@@ -11,3 +11,12 @@ Default vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, 
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## Layers and templates
+
+How layers compose, and how template paths map to project paths (relocation, `@/` imports): `docs/layers.md`. Read it before adding or moving a template file.
+
+## Checks
+
+- Fast: `pnpm typecheck && pnpm lint && pnpm format:check && pnpm -r test`
+- Generated projects: `pnpm matrix --only '<combo id>'` (ids are `platform-database-orm-auth-validation-pattern-layout`; needs Docker; `test:e2e` needs host ports 5432 and 6379 free)
