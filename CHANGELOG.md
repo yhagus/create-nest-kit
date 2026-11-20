@@ -26,6 +26,7 @@ Generated projects keep only feature tests: every test drives the app from outsi
 
 #### Bug fixes
 * `templates`
+  * [207f168](https://github.com/yhagus/create-nest-kit/commit/207f16869b03290eb5d3cb0a9ec7a3ed8d4bc266) fix(templates): stop checking a renewed one-second access token
   * [42e84d9](https://github.com/yhagus/create-nest-kit/commit/42e84d9db95d1bfe2e9a7b88a5696eb1754ff1a1) fix(templates): accept reuse detection in the concurrent refresh test
 
 #### Docs
