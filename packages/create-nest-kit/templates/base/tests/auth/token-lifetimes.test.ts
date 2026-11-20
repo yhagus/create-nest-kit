@@ -9,12 +9,13 @@ import {
 } from '../support/auth.js';
 import { createTestApp, type TestApp } from '../support/test-app.js';
 
-// Each wait leaves at least 1.5 s between a refresh and the deadline it must beat, and passes a
-// deadline by at least a second, so a slow machine can't turn these red.
+// A refresh that must succeed happens at least 3 s before its deadline, so a stalled CI runner
+// can't turn it red. A check that must be refused happens at least a second past its deadline;
+// running late only moves it further past.
 
 // JWT expiry has a resolution of one second, so waits are a little over two.
 const PAST_TWO_SECONDS_MS = 2_100;
-const LIFETIME_TEST_TIMEOUT_MS = 20_000;
+const LIFETIME_TEST_TIMEOUT_MS = 40_000;
 
 describe('with a one-second access token', () => {
   let testApp: TestApp;
@@ -41,13 +42,13 @@ describe('with a one-second access token', () => {
   });
 });
 
-describe('with a four-second sliding refresh lifetime', () => {
-  const WITHIN_LIFETIME_MS = 2_500;
-  const PAST_LIFETIME_MS = 5_000;
+describe('with an eight-second sliding refresh lifetime', () => {
+  const WITHIN_LIFETIME_MS = 5_000;
+  const PAST_LIFETIME_MS = 9_000;
   let testApp: TestApp;
 
   beforeAll(async () => {
-    testApp = await createTestApp({ REFRESH_TOKEN_TTL: '4s' });
+    testApp = await createTestApp({ REFRESH_TOKEN_TTL: '8s' });
     await seedSystemRoles(testApp);
   });
 
@@ -73,13 +74,13 @@ describe('with a four-second sliding refresh lifetime', () => {
   );
 });
 
-describe('with a three-second absolute session lifetime', () => {
-  const WITHIN_LIFETIME_MS = 1_500;
-  const PAST_LIFETIME_MS = 2_500;
+describe('with a six-second absolute session lifetime', () => {
+  const WITHIN_LIFETIME_MS = 3_000;
+  const PAST_LIFETIME_MS = 4_000;
   let testApp: TestApp;
 
   beforeAll(async () => {
-    testApp = await createTestApp({ SESSION_ABSOLUTE_TTL: '3s' });
+    testApp = await createTestApp({ SESSION_ABSOLUTE_TTL: '6s' });
     await seedSystemRoles(testApp);
   });
 
