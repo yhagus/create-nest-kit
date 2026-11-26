@@ -1,9 +1,10 @@
 # syntax=docker/dockerfile:1
 
-FROM node:24-alpine AS base
+FROM node:26.13.1-alpine AS base
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /app
-RUN corepack enable
+# Node 25+ doesn't bundle corepack, which runs the pnpm or yarn that package.json pins.
+RUN npm install --global corepack@0.36.0 && corepack enable
 COPY package.json pnpm-lock.yaml* yarn.lock* package-lock.json* bun.lock* ./
 
 # Installs with whichever package manager produced the lockfile. The later stages copy
@@ -27,7 +28,7 @@ COPY . .
 # The postinstall skipped in deps, now that the sources are here.
 RUN npm run postinstall --if-present && npm run build
 
-FROM node:24-alpine AS runtime
+FROM node:26.13.1-alpine AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --chown=node:node package.json ./

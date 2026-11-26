@@ -2,6 +2,8 @@ import * as p from '@clack/prompts';
 import { UsageError } from './args.ts';
 import {
   AUTH_LABELS,
+  CI_PROVIDER_HINTS,
+  CI_PROVIDER_LABELS,
   DATABASE_LABELS,
   DEV_ENVIRONMENT_HINTS,
   DEV_ENVIRONMENT_LABELS,
@@ -18,6 +20,7 @@ import {
 import type { LayerManifest } from './layers/types.ts';
 import {
   AUTH_STYLES,
+  CI_PROVIDERS,
   DATABASES,
   DEV_ENVIRONMENTS,
   LAYOUTS,
@@ -26,8 +29,10 @@ import {
   PATTERNS,
   PLATFORMS,
   PROJECT_TYPES,
+  remoteUrlProblem,
   VALIDATION_LIBRARIES,
   type AuthStyle,
+  type CiProvider,
   type Database,
   type DevEnvironment,
   type Layout,
@@ -42,7 +47,7 @@ import {
 } from './options.ts';
 import type { PackageManagerStep } from './package-manager-choice.ts';
 import { DEFAULT_DIRECTORY, packageNameStep, shortenHomePath } from './project-target.ts';
-import { comboAvailability, ormStep, selectStep } from './wizard-choices.ts';
+import { comboAvailability, ormStep, selectStep, suggestedCiProvider } from './wizard-choices.ts';
 
 export interface WizardInput {
   cwd: string;
@@ -76,6 +81,9 @@ interface WizardPrompts {
   devEnvironment: DevEnvironment | symbol;
   install: boolean | symbol;
   git: boolean | symbol;
+  /** Empty when the user skips it. */
+  remote: string | undefined | symbol;
+  ci: CiProvider | symbol;
 }
 
 /** Thrown from clack's onCancel, which otherwise carries on with the next prompt. */
@@ -272,6 +280,23 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
           preset.git !== undefined
             ? Promise.resolve(preset.git)
             : p.confirm({ message: 'Initialize a git repository?', initialValue: true }),
+        remote: ({ results }) => {
+          if (preset.remote !== undefined) return Promise.resolve(preset.remote);
+          if (results.git !== true) return undefined;
+          return p.text({
+            message: 'Remote URL to register as origin (optional, nothing is pushed)',
+            placeholder: 'leave empty to skip',
+            validate: (value) => (value ? invalidRemoteMessage(value) : undefined),
+          });
+        },
+        ci: ({ results }) =>
+          preset.ci !== undefined
+            ? Promise.resolve(preset.ci)
+            : p.select({
+                message: 'CI provider',
+                ...selectStep(CI_PROVIDERS, CI_PROVIDER_LABELS, () => true, CI_PROVIDER_HINTS),
+                initialValue: suggestedCiProvider(results.remote),
+              }),
       },
       {
         onCancel: () => {
@@ -283,6 +308,7 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
     return parseProjectOptions({
       ...answers,
       directory: answers.directory || DEFAULT_DIRECTORY,
+      remote: answers.remote || undefined,
       packageManagerVersion: packageManagerVersion(packageManagerStep, answers.packageManager),
     });
   } catch (error) {
@@ -294,6 +320,11 @@ export async function runWizard(input: WizardInput): Promise<ProjectOptions | un
 function invalidPackageNameMessage(name: string): string | undefined {
   const problem = packageNameProblem(name);
   return problem && `Not a valid npm package name: ${problem}`;
+}
+
+function invalidRemoteMessage(url: string): string | undefined {
+  const problem = remoteUrlProblem(url);
+  return problem && `Not a valid git remote: ${problem}`;
 }
 
 /** The version to pin for the chosen manager: from the user agent, or from probing PATH. */

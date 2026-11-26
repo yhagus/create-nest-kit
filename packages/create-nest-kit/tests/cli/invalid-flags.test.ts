@@ -27,6 +27,17 @@ describe('a command line the CLI cannot act on', () => {
       message: '--name "My App" is not a valid npm package name: it contains capital letters',
     },
     {
+      problem: 'a remote without a repository',
+      args: ['--remote', 'git@github.com:acme/app.git', '--no-git'],
+      message: '--remote needs a git repository; drop --remote or --no-git',
+    },
+    {
+      problem: 'a remote with whitespace in it',
+      args: ['--remote', 'git@github.com:acme/my app.git'],
+      message:
+        '--remote "git@github.com:acme/my app.git" is not a valid git remote: it contains whitespace',
+    },
+    {
       problem: 'an unknown flag',
       args: ['--frobnicate'],
       message: "Unknown option '--frobnicate'",

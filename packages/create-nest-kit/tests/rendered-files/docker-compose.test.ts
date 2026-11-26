@@ -44,7 +44,7 @@ describe('docker-compose.yml with --dev-env docker', () => {
           command: [
             'sh',
             '-c',
-            'corepack pnpm install && npm run db:migrate && npm run db:seed && npm run start:dev',
+            'npx --yes corepack@0.36.0 pnpm install && npm run db:migrate && npm run db:seed && npm run start:dev',
           ],
           environment: {
             COREPACK_ENABLE_DOWNLOAD_PROMPT: '0',
@@ -60,7 +60,7 @@ describe('docker-compose.yml with --dev-env docker', () => {
 
   it.each([
     { packageManager: 'npm', install: 'npm install' },
-    { packageManager: 'yarn', install: 'corepack yarn install' },
+    { packageManager: 'yarn', install: 'npx --yes corepack@0.36.0 yarn install' },
     { packageManager: 'bun', install: 'npx --yes bun@1.4.0 install' },
   ])('installs with $packageManager in the API container', async ({ packageManager, install }) => {
     const compose = composeSchema.parse(

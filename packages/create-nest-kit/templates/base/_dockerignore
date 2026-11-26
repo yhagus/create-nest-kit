@@ -4,6 +4,8 @@ coverage
 tests
 .git
 .github
+.gitlab-ci.yml
+.ci-cache
 .env
 *.tsbuildinfo
 web

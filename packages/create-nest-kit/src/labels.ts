@@ -1,5 +1,6 @@
 import type {
   AuthStyle,
+  CiProvider,
   Database,
   DevEnvironment,
   Layout,
@@ -72,6 +73,19 @@ export const DEV_ENVIRONMENT_HINTS: Record<DevEnvironment, string> = {
   docker: 'the API runs in a container too',
 };
 
+export const CI_PROVIDER_LABELS: Record<CiProvider, string> = {
+  github: 'GitHub Actions',
+  gitlab: 'GitLab CI/CD',
+  none: 'None',
+};
+
+/** Shown next to each CI provider in the wizard. */
+export const CI_PROVIDER_HINTS: Record<CiProvider, string> = {
+  github: '.github/workflows/ci.yml',
+  gitlab: '.gitlab-ci.yml',
+  none: 'no pipeline config',
+};
+
 export const PATTERN_LABELS: Record<Pattern, string> = {
   service: 'Controller + service',
   cqrs: 'CQRS',
@@ -122,11 +136,15 @@ export function describeOptions(options: ProjectOptions): [string, string][] {
 
 /** `describeOptions` plus where and what gets written, for the confirmation summary. */
 export function describeRun(options: ProjectOptions, location: string): [string, string][] {
+  const remoteRows: [string, string][] =
+    options.remote === undefined ? [] : [['Remote', options.remote]];
   return [
     ['Location', location],
     ['Package name', options.name],
     ...describeOptions(options),
     ['Install dependencies', yesNoLabel(options.install)],
     ['Initialize git', yesNoLabel(options.git)],
+    ...remoteRows,
+    ['CI provider', CI_PROVIDER_LABELS[options.ci]],
   ];
 }

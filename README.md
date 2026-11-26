@@ -53,7 +53,7 @@ The generated project's own README has the exact commands for the package manage
 - **Security:** CSRF protection (toggle), security headers, CORS, Redis-backed rate limiting.
 - **Infrastructure:** BullMQ queues, mail through a queue (Mailpit in development), pino logging with request ids, health checks at `/health`, Swagger UI at `/docs`, an env schema validated at startup.
 - **Tests:** feature tests in `tests/<feature>/`, which call the API, run `db:migrate` and `db:seed` and boot the app against real Postgres or MongoDB, Redis and Mailpit (Testcontainers), asserting only what a client can observe.
-- **Tooling:** TypeScript 6, Vitest, oxlint, Prettier, `docker-compose.yml`, a `Dockerfile` and a GitHub Actions CI workflow.
+- **Tooling:** TypeScript 6, Vitest, oxlint, Prettier, `docker-compose.yml`, a `Dockerfile` and a CI pipeline (GitHub Actions or GitLab CI/CD).
 
 The feature tests in every generated project are the executable form of [docs/contract.md](docs/contract.md).
 
@@ -142,6 +142,8 @@ Any option given as a flag is not asked for. With `--yes`, everything not given 
 | Dev environment     | Local Node.js (databases in Docker) · Docker (the API in a container too)                                                                                               | `--dev-env local\|docker`                             |
 | Install             | yes · no                                                                                                                                                                | `--no-install`                                        |
 | Git repository      | yes · no (skipped inside an existing repository)                                                                                                                        | `--no-git`                                            |
+| Remote              | none · a git URL registered as `origin` after `git init`, never pushed (asked after git)                                                                                | `--remote <url>`                                      |
+| CI provider         | GitHub Actions · GitLab CI/CD · none (preselected from the remote's host)                                                                                               | `--ci github\|gitlab\|none`                           |
 
 Other flags: `--dry-run` shows what would be generated and writes nothing, `--force` writes into a non-empty folder without asking (files with the same name are replaced, nothing is deleted), `-h, --help`, `-v, --version`.
 

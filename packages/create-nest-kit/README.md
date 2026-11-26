@@ -36,7 +36,7 @@ Generated projects include authentication with refresh-token rotation, email ver
 password reset and change, roles and permissions, session management with immediate revocation,
 CSRF protection, rate limiting, BullMQ queues, queued mail (Mailpit in development), pino logging,
 health checks, Swagger UI, feature tests against real containers (Testcontainers), `docker-compose.yml`, a
-`Dockerfile` and a GitHub Actions workflow.
+`Dockerfile` and a CI pipeline for GitHub Actions or GitLab CI/CD.
 
 Requires Node.js ≥ 24.15. The generated project's tests need Docker.
 
@@ -60,6 +60,8 @@ Requires Node.js ≥ 24.15. The generated project's tests need Docker.
 | Dev environment     | Local Node.js (databases in Docker) · Docker (the API in a container too)                                                                                               | `--dev-env local\|docker`                             |
 | Install             | yes · no                                                                                                                                                                | `--no-install`                                        |
 | Git repository      | yes · no                                                                                                                                                                | `--no-git`                                            |
+| Remote              | none · a git URL registered as `origin` after `git init`, never pushed (asked after git)                                                                                | `--remote <url>`                                      |
+| CI provider         | GitHub Actions · GitLab CI/CD · none (preselected from the remote's host)                                                                                               | `--ci github\|gitlab\|none`                           |
 
 MongoDB works only with Mongoose; the SQL ORMs only with PostgreSQL. Any option given as a flag is
 not asked for, and `--yes` takes the defaults for the rest:

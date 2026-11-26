@@ -1,6 +1,7 @@
 import { parseArgs } from 'node:util';
 import {
   AUTH_STYLES,
+  CI_PROVIDERS,
   compatibilityProblem,
   DATABASES,
   DEV_ENVIRONMENTS,
@@ -11,6 +12,7 @@ import {
   PATTERNS,
   PLATFORMS,
   PROJECT_TYPES,
+  remoteUrlProblem,
   VALIDATION_LIBRARIES,
   type ProjectChoices,
 } from './options.ts';
@@ -51,6 +53,8 @@ const FLAGS = {
   csrf: { type: 'boolean' },
   install: { type: 'boolean' },
   git: { type: 'boolean' },
+  remote: { type: 'string' },
+  ci: { type: 'string' },
   yes: { type: 'boolean', short: 'y' },
   force: { type: 'boolean' },
   'dry-run': { type: 'boolean' },
@@ -62,6 +66,11 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
   const { values, positionals } = parseFlags(argv);
   if (positionals.length > 1) {
     throw new UsageError(`Expected at most one directory, got: ${positionals.join(' ')}`);
+  }
+
+  const remote = parseRemote(values.remote);
+  if (remote !== undefined && values.git === false) {
+    throw new UsageError('--remote needs a git repository; drop --remote or --no-git');
   }
 
   // Choices not given stay undefined, which both the wizard and the options schema treat as "not chosen".
@@ -79,7 +88,10 @@ export function parseCliArgs(argv: readonly string[]): CliArgs {
     emailVerification: values['email-verification'],
     csrf: values.csrf,
     install: values.install,
-    git: values.git,
+    // A remote needs a repository, so --remote also answers the git question.
+    git: values.git ?? (remote === undefined ? undefined : true),
+    remote,
+    ci: parseChoice('--ci', CI_PROVIDERS, values.ci),
   };
   if (choices.database && choices.orm) {
     const problem = compatibilityProblem(choices.database, choices.orm);
@@ -119,6 +131,13 @@ function parsePackageName(value: string | undefined): string | undefined {
   const problem = packageNameProblem(value);
   if (problem)
     throw new UsageError(`--name "${value}" is not a valid npm package name: ${problem}`);
+  return value;
+}
+
+function parseRemote(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const problem = remoteUrlProblem(value);
+  if (problem) throw new UsageError(`--remote "${value}" is not a valid git remote: ${problem}`);
   return value;
 }
 

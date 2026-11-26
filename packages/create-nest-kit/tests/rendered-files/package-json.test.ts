@@ -11,7 +11,6 @@ describe('package.json', () => {
       version: '0.0.1',
       private: true,
       type: 'module',
-      engines: { node: '>=24.15' },
       pnpm: { onlyBuiltDependencies: expect.arrayContaining(['@swc/core']) },
     });
   });

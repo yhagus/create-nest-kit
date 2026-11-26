@@ -2,7 +2,14 @@ import { UsageError } from './args.ts';
 import { DATABASE_LABELS, ORM_LABELS } from './labels.ts';
 import { isComboReady } from './layers/resolve.ts';
 import type { LayerManifest } from './layers/types.ts';
-import { listCombos, ORMS_BY_DATABASE, type Combo, type Database, type Orm } from './options.ts';
+import {
+  listCombos,
+  ORMS_BY_DATABASE,
+  type CiProvider,
+  type Combo,
+  type Database,
+  type Orm,
+} from './options.ts';
 
 // The wizard's decisions, kept apart from the clack prompts so they can be unit-tested.
 
@@ -87,4 +94,10 @@ export function ormStep(database: Database, isAvailable: (orm: Orm) => boolean):
     };
   }
   return { kind: 'select', ...selectStep(orms, ORM_LABELS, isAvailable) };
+}
+
+/** Preselects the CI provider of the remote's host; GitHub when there is no remote or another host. */
+export function suggestedCiProvider(remote: string | undefined): CiProvider {
+  if (remote?.includes('gitlab.com')) return 'gitlab';
+  return 'github';
 }

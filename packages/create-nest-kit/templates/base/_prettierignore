@@ -11,6 +11,8 @@ yarn.lock
 bun.lock
 .yarn
 .pnp.*
+# Package manager stores GitLab CI caches inside the project
+.ci-cache
 
 # Written by ORM tooling, not by hand. Not every ORM is in this project; extra entries are harmless.
 # Drizzle: SQL migrations and their meta/ snapshots

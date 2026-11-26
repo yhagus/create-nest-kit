@@ -7,15 +7,22 @@ import {
   WEB_CONTAINER_SERVICE,
   WEB_DIRECTORY,
 } from './quickstart.ts';
+import { PINNED_NODE_VERSION } from './pinned-node-version.ts';
 import { sortKeys } from './sort-keys.ts';
 
 /** The image the Dockerfile builds on, so development and production run the same Node. */
-const DEV_CONTAINER_IMAGE = 'node:24-alpine';
+const DEV_CONTAINER_IMAGE = `node:${PINNED_NODE_VERSION}-alpine`;
 /**
- * The bun the Dockerfile installs with. The Node image has none and corepack doesn't manage bun,
- * so the API container fetches it with npx; the front end's container is a bun image.
+ * The bun the Dockerfile and GitLab CI install with. The Node image has none and corepack doesn't
+ * manage bun, so the API container fetches it with npx; the front end's container is a bun image.
  */
-const BUN_VERSION = '1.4.0';
+export const BUN_VERSION = '1.4.0';
+/**
+ * The corepack the Dockerfile, CI and the dev container use to run the pnpm or yarn that
+ * package.json pins. Node 25+ no longer bundles corepack, so each installs this release.
+ * The Dockerfile repeats it as a literal; tests/rendered-files/node-version.test.ts checks it.
+ */
+export const COREPACK_VERSION = '0.36.0';
 /** The dev container's own node_modules, built for Linux. It hides the host's in the mount. */
 const NODE_MODULES_VOLUME = 'node-modules';
 /** The same, for the front end's container. */
@@ -103,8 +110,8 @@ function containerInstallCommand(packageManager: PackageManager): string {
       return 'npm install';
     case 'pnpm':
     case 'yarn':
-      // Corepack runs the version package.json pins.
-      return `corepack ${packageManager} install`;
+      // Corepack runs the version package.json pins. The Node image has no corepack of its own.
+      return `npx --yes corepack@${COREPACK_VERSION} ${packageManager} install`;
     case 'bun':
       return `npx --yes bun@${BUN_VERSION} install`;
   }

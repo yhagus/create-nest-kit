@@ -13,6 +13,8 @@ import type { PackageManager } from '../options.ts';
 const execFileAsync = promisify(execFile);
 
 export const INITIAL_COMMIT_MESSAGE = 'chore: scaffold with create-nest-kit';
+/** The branch the generated CI pipelines run on pushes to. */
+export const INITIAL_BRANCH = 'main';
 
 /**
  * Runs `<packageManager> install` in `directory`, streaming its output into a clack task log.
@@ -76,7 +78,7 @@ export type GitResult =
   | { status: 'not-committed'; reason: string };
 
 /**
- * `git init`, then commits everything. Skips when git is missing or `directory`
+ * `git init` on the `main` branch, then commits everything. Skips when git is missing or `directory`
  * is already inside a repository; a failed commit (e.g. no git identity) leaves
  * the repository initialised but empty.
  */
@@ -92,15 +94,27 @@ export async function initGitRepository(directory: string): Promise<GitResult> {
     return { status: 'skipped', reason: 'the directory is already inside a git repository' };
   }
 
-  await git('init');
+  await git('init', `--initial-branch=${INITIAL_BRANCH}`);
   await git('add', '--all');
   try {
     await git('commit', '--message', INITIAL_COMMIT_MESSAGE);
   } catch (error) {
-    const stderr = isRecord(error) && typeof error.stderr === 'string' ? error.stderr.trim() : '';
-    return { status: 'not-committed', reason: stderr || String(error) };
+    return { status: 'not-committed', reason: commandErrorText(error) };
   }
   return { status: 'committed' };
+}
+
+export type RemoteResult = { status: 'added' } | { status: 'failed'; reason: string };
+
+/** Registers `url` as `origin` in the repository at `directory`. Never pushes. */
+export async function addGitRemote(directory: string, url: string): Promise<RemoteResult> {
+  try {
+    // `--` keeps a URL starting with `-` from being read as an option.
+    await execFileAsync('git', ['remote', 'add', '--', 'origin', url], { cwd: directory });
+    return { status: 'added' };
+  } catch (error) {
+    return { status: 'failed', reason: commandErrorText(error) };
+  }
 }
 
 async function isInsideWorkTree(directory: string): Promise<boolean> {
@@ -112,6 +126,12 @@ async function isInsideWorkTree(directory: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** A failed command's stderr, which says what went wrong, or the error itself when there is none. */
+function commandErrorText(error: unknown): string {
+  const stderr = isRecord(error) && typeof error.stderr === 'string' ? error.stderr.trim() : '';
+  return stderr || String(error);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

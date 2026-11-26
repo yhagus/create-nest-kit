@@ -2,9 +2,10 @@ import { stringify } from 'yaml';
 import type { PackageManager, ProjectOptions } from '../options.ts';
 import { frozenInstallCommand, runScriptCommand } from '../package-manager.ts';
 import { WEB_DIRECTORY } from './quickstart.ts';
+import { COREPACK_VERSION } from './render-compose.ts';
 
-const NODE_VERSION = 24;
-const CHECK_SCRIPTS = ['lint', 'format:check', 'typecheck', 'test'];
+/** The scripts every CI pipeline runs, in order, after a frozen install. */
+export const CHECK_SCRIPTS = ['lint', 'format:check', 'typecheck', 'test'];
 
 export function renderCiWorkflow(options: ProjectOptions): string {
   const packageManager = options.packageManager;
@@ -50,9 +51,15 @@ function packageManagerSetupSteps(packageManager: PackageManager): Record<string
     case 'npm':
       return [setupNode('npm')];
     case 'yarn':
-      // Corepack runs the yarn that package.json's packageManager pins (Berry included).
-      // It must be on before setup-node, whose cache step calls yarn.
-      return [{ run: 'corepack enable' }, setupNode('yarn')];
+      // Corepack runs the yarn that package.json's packageManager pins (Berry included). Node 25+
+      // doesn't bundle it, so it is installed into the pinned Node, which the first setup-node
+      // provides. The second only adds the cache: its cache step calls yarn, so it must come last.
+      return [
+        setupNode(),
+        { run: `npm install --global corepack@${COREPACK_VERSION}` },
+        { run: 'corepack enable' },
+        setupNode('yarn'),
+      ];
     case 'bun':
       // Scripts still run their tools with Node; Bun only installs and runs scripts.
       return [{ uses: 'oven-sh/setup-bun@v2' }, setupNode()];
@@ -63,6 +70,6 @@ function packageManagerSetupSteps(packageManager: PackageManager): Record<string
 function setupNode(cache?: PackageManager): Record<string, unknown> {
   return {
     uses: 'actions/setup-node@v7',
-    with: { 'node-version': NODE_VERSION, ...(cache && { cache }) },
+    with: { 'node-version-file': '.nvmrc', ...(cache && { cache }) },
   };
 }

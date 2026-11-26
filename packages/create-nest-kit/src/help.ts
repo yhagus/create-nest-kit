@@ -28,6 +28,10 @@ Options:
                                             (default: local; the databases run in Docker either way)
   --no-install                              Don't install dependencies
   --no-git                                  Don't initialize a git repository
+  --remote <url>                            Register <url> as the repository's origin; nothing is pushed
+                                            (asked after git if omitted; implies git)
+  --ci <github|gitlab|none>                 CI pipeline to ship: GitHub Actions, GitLab CI/CD or none
+                                            (default: github)
   -y, --yes                                 Use defaults for everything not given; don't prompt
   --force                                   Write into a non-empty directory without asking
   --dry-run                                 Show what would be generated; write nothing

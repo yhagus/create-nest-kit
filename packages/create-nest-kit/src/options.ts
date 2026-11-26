@@ -11,6 +11,7 @@ export const PATTERNS = ['service', 'cqrs'] as const;
 export const LAYOUTS = ['nested', 'flat'] as const;
 export const PACKAGE_MANAGERS = ['pnpm', 'npm', 'yarn', 'bun'] as const;
 export const DEV_ENVIRONMENTS = ['local', 'docker'] as const;
+export const CI_PROVIDERS = ['github', 'gitlab', 'none'] as const;
 
 /** `fullstack` adds a Nuxt front end in `web/`, a package of its own. */
 export type ProjectType = (typeof PROJECT_TYPES)[number];
@@ -30,6 +31,8 @@ export type Layout = (typeof LAYOUTS)[number];
 export type PackageManager = (typeof PACKAGE_MANAGERS)[number];
 /** Where the API runs in development: `local` on the host's Node, `docker` in a compose service. */
 export type DevEnvironment = (typeof DEV_ENVIRONMENTS)[number];
+/** The hosted CI service the project ships pipeline config for; `none` ships none. */
+export type CiProvider = (typeof CI_PROVIDERS)[number];
 
 export const ORMS_BY_DATABASE = {
   postgres: ['drizzle', 'prisma', 'typeorm', 'mikroorm'],
@@ -52,6 +55,9 @@ export interface ProjectChoices {
   devEnvironment: DevEnvironment;
   install: boolean;
   git: boolean;
+  /** The git URL registered as `origin` after `git init`; never pushed to. */
+  remote?: string;
+  ci: CiProvider;
 }
 
 export interface ProjectOptions extends ProjectChoices {
@@ -94,6 +100,20 @@ export function packageNameProblem(name: string): string | undefined {
   return undefined;
 }
 
+/** Returns why `url` can't be a git remote, or undefined when it can. The URL format is left to git. */
+export function remoteUrlProblem(url: string): string | undefined {
+  if (url.length === 0) return 'it is empty';
+  if (/\s/.test(url)) return 'it contains whitespace';
+  return undefined;
+}
+
+const remoteSchema = z.string().superRefine((url, context) => {
+  const problem = remoteUrlProblem(url);
+  if (problem) {
+    context.addIssue({ code: 'custom', message: `"${url}" is not a valid git remote: ${problem}` });
+  }
+});
+
 const packageNameSchema = z.string().superRefine((name, context) => {
   const problem = packageNameProblem(name);
   if (problem) {
@@ -123,6 +143,8 @@ export const projectOptionsSchema = z.object({
   devEnvironment: z.enum(DEV_ENVIRONMENTS).default('local'),
   install: z.boolean().default(true),
   git: z.boolean().default(true),
+  remote: remoteSchema.optional(),
+  ci: z.enum(CI_PROVIDERS).default('github'),
 });
 
 export type ProjectOptionsInput = z.input<typeof projectOptionsSchema>;

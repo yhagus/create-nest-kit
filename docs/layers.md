@@ -212,7 +212,8 @@ templates. Their output is sorted and deterministic.
 | `.env`, `.env.example`     | `env`                                                                                                                                |
 | `docker-compose.yml`       | `compose`                                                                                                                            |
 | `README.md`                | options table, quickstart and scripts table in the chosen package manager's syntax, `readme` sections                                |
-| `.github/workflows/ci.yml` | Node 24, package manager setup, install, `lint`, `format:check`, `typecheck`, `test`                                                 |
+| `.github/workflows/ci.yml` | Node from `.nvmrc`, package manager setup, install, `lint`, `format:check`, `typecheck`, `test`                                      |
+| `.gitlab-ci.yml`           | `--ci gitlab` instead of the workflow above: the pinned `node` image, the same steps, a `docker:dind` service for Testcontainers     |
 
 `packageManager` pins the version of pnpm or yarn that ran the installer (read from
 `npm_config_user_agent`) or, when the wizard asked for the package manager, the version its
@@ -220,6 +221,11 @@ templates. Their output is sorted and deterministic.
 when neither `--pm` nor the user agent names one (as under `install.sh`), offering the installed
 managers (`src/package-manager-choice.ts`); `--yes` uses npm then. Corepack in the Dockerfile and `pnpm/action-setup` in CI read it; npm and bun get no pin,
 since corepack doesn't manage them.
+
+The pinned Node version is `PINNED_NODE_VERSION` in `src/generate/pinned-node-version.ts`;
+`engines` and the dev container's image derive from it. `templates/base/_nvmrc` and the
+Dockerfile repeat it as literals, and `tests/rendered-files/node-version.test.ts` fails when they
+drift.
 
 ## Status: `planned` and `ready`
 

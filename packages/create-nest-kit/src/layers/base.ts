@@ -59,7 +59,7 @@ export const baseLayer: LayerManifest = {
     '@nestjs/testing': NEST_VERSION,
     '@swc/core': '1.16.20',
     '@testcontainers/redis': TESTCONTAINERS_VERSION,
-    '@types/node': '24.19.2',
+    '@types/node': '26.6.6',
     '@vitest/coverage-v8': '5.0.5',
     oxlint: '1.89.0',
     'pino-pretty': '13.2.0',

@@ -11,8 +11,9 @@ The release carries `create-nest-kit.tar.gz`, its `.sha256` and `install.sh`. Th
 1. Pick the version from the Conventional Commits since the last tag (`git describe --tags --abbrev=0`): a `BREAKING CHANGE` footer or `!` means major, any `feat` means minor, otherwise patch. A version with a suffix (`v1.2.0-rc.1`) is published as a prerelease.
 2. Set `version` in `packages/create-nest-kit/package.json`.
 3. Add the section at the top of `CHANGELOG.md` in the format below.
-4. Run `pnpm build && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test`, commit `chore(release): vX.Y.Z`, and push `main`.
-5. Tag and push: `git tag -a vX.Y.Z -m vX.Y.Z && git push origin vX.Y.Z`. Watch the run with `gh run watch`. Done when the Release workflow is green and the release page shows the section.
+4. Bump the pinned Node version to the latest Node LTS patch: `PINNED_NODE_VERSION` in `packages/create-nest-kit/src/generate/pinned-node-version.ts`, the literals in `templates/base/_nvmrc` and `templates/base/Dockerfile`, and `@types/node` in `src/layers/base.ts` (same major). Bump corepack to its latest release too: `COREPACK_VERSION` in `src/generate/render-compose.ts` and the literal in `templates/base/Dockerfile`.
+5. Run `pnpm build && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test`, commit `chore(release): vX.Y.Z`, and push `main`.
+6. Tag and push: `git tag -a vX.Y.Z -m vX.Y.Z && git push origin vX.Y.Z`. Watch the run with `gh run watch`. Done when the Release workflow is green and the release page shows the section.
 
 ## Section format
 

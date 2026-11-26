@@ -8,7 +8,7 @@ import { KEYS, startCli, WIZARD_TEST_TIMEOUT_MS } from '../support/terminal.ts';
 /** Every option but the database and ORM as a flag, so the wizard asks only for what a test is about. */
 const ALL_BUT_DATABASE = (
   '--type api --platform fastify --auth jwt --validation zod --pattern service --layout nested ' +
-  '--dev-env local --pm npm --email-verification --csrf --no-install --no-git'
+  '--dev-env local --pm npm --email-verification --csrf --no-install --no-git --ci github'
 ).split(' ');
 const ALL_OPTIONS = [...ALL_BUT_DATABASE, '--db', 'postgres', '--orm', 'drizzle'];
 

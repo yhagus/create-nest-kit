@@ -50,6 +50,18 @@ _Avoid_: Combo choice
 One value for each code-shaping option; a generated project is built from exactly one combo.
 _Avoid_: Combination, variant, flavour
 
+**CI provider**:
+The hosted CI service a generated project ships pipeline config for: `github`, `gitlab` or `none`. An option, not a code-shaping option.
+_Avoid_: CI platform, CI option
+
+**Remote**:
+The git URL registered as `origin` in a generated project's repository; registered only, never pushed to.
+_Avoid_: Origin URL, upstream
+
+**Pinned Node version**:
+The one exact Node.js LTS release every generated project targets, everywhere it names a Node version.
+_Avoid_: Node target, minimum Node
+
 **Matrix**:
 Generating a set of combos and running the generated projects' checks in each.
 _Avoid_: Combo list

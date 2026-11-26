@@ -5,7 +5,13 @@ import * as p from '@clack/prompts';
 import { parseCliArgs, UsageError, type CliArgs } from './args.ts';
 import { formatDryRun } from './dry-run.ts';
 import { composeProject, CompositionError, writeProject } from './generate/compose.ts';
-import { initGitRepository, installDependencies, installWebDependencies } from './generate/post.ts';
+import {
+  addGitRemote,
+  INITIAL_BRANCH,
+  initGitRepository,
+  installDependencies,
+  installWebDependencies,
+} from './generate/post.ts';
 import {
   MAILPIT_URL,
   quickstartCommands,
@@ -101,13 +107,14 @@ async function runCommand(argv: readonly string[], environment: RunEnvironment):
     options.install &&
     options.projectType === 'fullstack' &&
     (await installWebDependencies(path.join(targetDir, WEB_DIRECTORY)));
-  if (options.git) await reportGit(targetDir);
+  const isRemoteAdded = options.git && (await setUpGit(targetDir, options.remote));
 
   const nextSteps = [
     ...(targetDir === environment.cwd ? [] : [`cd ${shellQuote(options.directory)}`]),
     ...(options.install ? [] : [installCommand(options.packageManager)]),
     ...quickstartCommands(options, plan.manifest),
     `Mailpit (dev mail): ${MAILPIT_URL}`,
+    ...(isRemoteAdded ? [`git push -u origin ${INITIAL_BRANCH}`] : []),
   ];
   p.note(nextSteps.join('\n'), 'Next steps');
   const webSteps = webQuickstartCommands(options, isWebInstalled);
@@ -178,19 +185,41 @@ async function confirmSummary(options: ProjectOptions, location: string): Promis
   return answer === true;
 }
 
-async function reportGit(targetDir: string): Promise<void> {
+/** Initializes the repository and registers the remote, if any. Returns whether the remote was added. */
+async function setUpGit(targetDir: string, remote: string | undefined): Promise<boolean> {
+  const isInitialized = await reportGit(targetDir);
+  if (remote === undefined) return false;
+  if (!isInitialized) {
+    p.log.warn(`Did not add the remote ${remote}: there is no new git repository to add it to`);
+    return false;
+  }
+  return reportRemote(targetDir, remote);
+}
+
+/** Returns whether a new repository was initialized, even if its initial commit failed. */
+async function reportGit(targetDir: string): Promise<boolean> {
   const result = await initGitRepository(targetDir);
   switch (result.status) {
     case 'committed':
       p.log.success('Initialized a git repository with an initial commit');
-      return;
+      return true;
     case 'skipped':
       p.log.info(`Skipped git: ${result.reason}`);
-      return;
+      return false;
     case 'not-committed':
       p.log.warn(`Initialized a git repository, but the initial commit failed:\n${result.reason}`);
-      return;
+      return true;
   }
+}
+
+async function reportRemote(targetDir: string, remote: string): Promise<boolean> {
+  const result = await addGitRemote(targetDir, remote);
+  if (result.status === 'failed') {
+    p.log.warn(`Could not add the remote ${remote}:\n${result.reason}`);
+    return false;
+  }
+  p.log.success(`Added ${remote} as the origin remote`);
+  return true;
 }
 
 async function listDirectory(directory: string): Promise<string[]> {

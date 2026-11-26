@@ -22,6 +22,7 @@ const PROMPTS = [
   'Require email verification before login?',
   'Enable CSRF protection?',
   'Dev environment',
+  'CI provider',
 ];
 
 /** Answers each prompt, in order, with its preselected value. */

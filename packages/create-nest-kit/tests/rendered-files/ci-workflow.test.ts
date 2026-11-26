@@ -44,13 +44,15 @@ describe('.github/workflows/ci.yml', () => {
     ]);
   });
 
-  it('enables Corepack before setting up Node with yarn, so CI runs the yarn the project pins', async () => {
+  it('installs Corepack into the pinned Node before caching with yarn, so CI runs the yarn the project pins', async () => {
     const workflow = await readWorkflow(['--pm', 'yarn']);
 
-    expect(workflow.jobs.check.steps.slice(0, 3)).toMatchObject([
+    expect(workflow.jobs.check.steps.slice(0, 5)).toEqual([
       { uses: 'actions/checkout@v7' },
+      { uses: 'actions/setup-node@v7', with: { 'node-version-file': '.nvmrc' } },
+      { run: 'npm install --global corepack@0.36.0' },
       { run: 'corepack enable' },
-      { uses: 'actions/setup-node@v7', with: { cache: 'yarn' } },
+      { uses: 'actions/setup-node@v7', with: { 'node-version-file': '.nvmrc', cache: 'yarn' } },
     ]);
   });
 

@@ -8,7 +8,7 @@ import { KEYS, startCli, WIZARD_TEST_TIMEOUT_MS } from '../support/terminal.ts';
 const ALL_OPTIONS = (
   '--type api --platform fastify --db postgres --orm drizzle --auth jwt --validation zod ' +
   '--pattern service --layout nested --dev-env local --pm npm --email-verification --csrf ' +
-  '--no-install --no-git'
+  '--no-install --no-git --ci github'
 ).split(' ');
 
 describe('cancelling the wizard', { timeout: WIZARD_TEST_TIMEOUT_MS }, () => {
