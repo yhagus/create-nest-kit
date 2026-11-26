@@ -41,7 +41,7 @@
     "templates"
   ],
   "engines": {
-    "node": ">=24.15"
+    "node": ">=26"
   },
   "scripts": {
     "build": "node scripts/build.ts",
@@ -56,7 +56,7 @@
   },
   "devDependencies": {
     "@lydell/node-pty": "1.2.0-beta.18",
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.6",
     "esbuild": "0.28.2",
     "prettier": "3.9.10",
     "typescript": "6.0.3",

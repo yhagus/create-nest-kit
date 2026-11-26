@@ -13,9 +13,10 @@ if (isNodeVersionSupported(process.versions.node)) {
     layerSetModule: process.env.NEST_KIT_LAYER_SET_MODULE,
   });
 } else {
+  const minimumMajor = MINIMUM_NODE_VERSION.split('.')[0];
   process.stderr.write(
     `create-nest-kit needs Node.js ${MINIMUM_NODE_VERSION} or newer, but this is Node.js ${process.versions.node}.\n` +
-      'Install Node.js 24 from https://nodejs.org, or with `fnm install 24` or `nvm install 24`.\n',
+      `Install Node.js ${minimumMajor} from https://nodejs.org, or with \`fnm install ${minimumMajor}\` or \`nvm install ${minimumMajor}\`.\n`,
   );
   process.exitCode = 1;
 }

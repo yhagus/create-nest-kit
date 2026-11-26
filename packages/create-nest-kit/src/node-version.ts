@@ -2,7 +2,7 @@
 // keep this file free of imports and of syntax newer than ES2020.
 
 /** Kept equal to `engines.node` in package.json and `MIN_NODE` in install.sh (a test checks both). */
-export const MINIMUM_NODE_VERSION = '24.15.0';
+export const MINIMUM_NODE_VERSION = '26.0.0';
 
 /** True when `version` (e.g. `process.versions.node`) is at least `minimum`, compared as numbers. */
 export function isNodeVersionSupported(version: string, minimum = MINIMUM_NODE_VERSION): boolean {

@@ -63,7 +63,7 @@ The feature tests in every generated project are the executable form of [docs/co
 
 ### Requirements
 
-- Node.js 24.15 or later. The installer stops with a hint when it is missing or older; install it from [nodejs.org](https://nodejs.org) or with `fnm install 24` / `nvm install 24`.
+- Node.js 26 or later. The installer stops with a hint when it is missing or older; install it from [nodejs.org](https://nodejs.org) or with `fnm install 26` / `nvm install 26`.
 - `curl` or `wget`, `tar`, and one of `sha256sum`, `shasum` or `openssl` (present on macOS and most Linux distributions).
 - npm, pnpm, yarn or bun, to install the generated project's dependencies.
 - Docker, to run the generated project (`docker compose up`, `test`). git is optional; without it the CLI skips `git init`.

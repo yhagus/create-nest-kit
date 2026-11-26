@@ -16,7 +16,7 @@
 set -eu
 
 REPO="yhagus/create-nest-kit"
-MIN_NODE="24.15.0"
+MIN_NODE="26.0.0"
 ARCHIVE="create-nest-kit.tar.gz"
 # Release tag installed when NEST_KIT_VERSION is unset; empty means the latest release. The copy
 # attached to each GitHub Release has its own tag stamped here by scripts/pack-release.ts.
@@ -30,7 +30,7 @@ has() {
   command -v "$1" >/dev/null 2>&1
 }
 
-# True when version $1 (e.g. v24.15.0, 24.15.0 or 25.0.0-nightly) is at least version $2 (X.Y.Z).
+# True when version $1 (e.g. v26.0.0, 26.0.0 or 27.0.0-nightly) is at least version $2 (X.Y.Z).
 version_at_least() {
   found=${1#v}
   found_major=${found%%.*}
@@ -68,15 +68,15 @@ check_requirements() {
     if version_at_least "$node_version" "$MIN_NODE"; then
       say "  node      $node_version"
     else
-      say "  node      $node_version: create-nest-kit needs Node.js 24.15 or newer."
+      say "  node      $node_version: create-nest-kit needs Node.js 26 or newer."
       problems=1
     fi
   else
-    say "  node      not found: create-nest-kit needs Node.js 24.15 or newer."
+    say "  node      not found: create-nest-kit needs Node.js 26 or newer."
     problems=1
   fi
   if [ "$problems" -ne 0 ]; then
-    say "            Install Node.js 24 from https://nodejs.org, or with \`fnm install 24\` or \`nvm install 24\`."
+    say "            Install Node.js 26 from https://nodejs.org, or with \`fnm install 26\` or \`nvm install 26\`."
   fi
 
   if has curl; then

@@ -38,7 +38,7 @@ CSRF protection, rate limiting, BullMQ queues, queued mail (Mailpit in developme
 health checks, Swagger UI, feature tests against real containers (Testcontainers), `docker-compose.yml`, a
 `Dockerfile` and a CI pipeline for GitHub Actions or GitLab CI/CD.
 
-Requires Node.js ≥ 24.15. The generated project's tests need Docker.
+Requires Node.js ≥ 26. The generated project's tests need Docker.
 
 ## Options
 

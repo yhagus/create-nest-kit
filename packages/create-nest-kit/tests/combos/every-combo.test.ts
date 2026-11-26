@@ -14,6 +14,8 @@ import { listFiles } from '../support/project.ts';
 
 const GENERATE_ALL_TIMEOUT_MS = 180_000;
 const CHECK_ALL_TIMEOUT_MS = 180_000;
+/** Deleting every generated project (thousands of files) can outlast the 10 s default on slow CI runners. */
+const REMOVE_ALL_TIMEOUT_MS = 120_000;
 
 /** A file directly inside `src/auth/` or a feature module's folder, in either layout. */
 const FEATURE_MODULE_ROOT_FILE =
@@ -36,7 +38,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (root !== '') await rm(root, { recursive: true, force: true });
-});
+}, REMOVE_ALL_TIMEOUT_MS);
 
 function succeeded(choice: { pattern?: string; layout?: string }): GeneratedCombo[] {
   return generated.filter(

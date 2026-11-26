@@ -15,7 +15,7 @@ const SHARED_OPTIONS = {
   bundle: true,
   format: 'esm',
   platform: 'node',
-  target: 'node24.15',
+  target: 'node26',
   logLevel: 'warning',
 } satisfies BuildOptions;
 

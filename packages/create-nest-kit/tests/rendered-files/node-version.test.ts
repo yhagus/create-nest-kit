@@ -27,7 +27,7 @@ function corepackVersionIn(text: string): string | null {
 // .nvmrc and the Dockerfile are copied verbatim (ADR 0001), so they can't read
 // PINNED_NODE_VERSION; this keeps them in step with the files rendered from it.
 describe('the pinned Node version of a generated project', () => {
-  it('is the same exact release in .nvmrc, the Dockerfile, docker-compose.yml and engines.node', async () => {
+  it('is the same exact release in .nvmrc, the Dockerfile and docker-compose.yml, and its major in engines.node', async () => {
     const projectDir = await generateProject(['--dev-env', 'docker']);
 
     const pinnedVersion = (await readProjectFile(projectDir, '.nvmrc')).trim();
@@ -41,7 +41,7 @@ describe('the pinned Node version of a generated project', () => {
       `FROM node:${pinnedVersion}-alpine`,
     ]);
     expect(compose.services.api.image).toBe(`node:${pinnedVersion}-alpine`);
-    expect(engines).toEqual({ node: `^${pinnedVersion}` });
+    expect(engines).toEqual({ node: `^${pinnedVersion.split('.')[0]}.0.0` });
   });
 
   it('types Node with the @types/node of the same major', async () => {

@@ -13,7 +13,7 @@ function pretendNodeVersion(version: string): string[] {
 }
 
 describe('the Node.js version check', () => {
-  it.each(['24.14.9', '22.22.0', '18.20.8'])(
+  it.each(['25.9.0', '24.15.0', '22.22.0'])(
     'refuses Node.js %s with an install hint',
     async (version) => {
       const workDir = await createWorkDir();
@@ -27,13 +27,13 @@ describe('the Node.js version check', () => {
         exitCode: 1,
         stdout: '',
         stderr:
-          `create-nest-kit needs Node.js 24.15.0 or newer, but this is Node.js ${version}.\n` +
-          'Install Node.js 24 from https://nodejs.org, or with `fnm install 24` or `nvm install 24`.\n',
+          `create-nest-kit needs Node.js 26.0.0 or newer, but this is Node.js ${version}.\n` +
+          'Install Node.js 26 from https://nodejs.org, or with `fnm install 26` or `nvm install 26`.\n',
       });
     },
   );
 
-  it.each(['24.15.0', '25.0.0-nightly20260101', '100.0.0'])(
+  it.each(['26.0.0', '27.0.0-nightly20270101', '100.0.0'])(
     'runs on Node.js %s',
     async (version) => {
       const workDir = await createWorkDir();
@@ -54,7 +54,7 @@ describe('the Node.js version check', () => {
       .parse(await readJsonFile(PACKAGE_ROOT, 'package.json'));
     const installScript = await readFile(path.join(REPO_ROOT, 'install.sh'), 'utf8');
 
-    expect(engines.node).toBe('>=24.15');
-    expect(installScript).toMatch(/^MIN_NODE="24\.15\.0"$/m);
+    expect(engines.node).toBe('>=26');
+    expect(installScript).toMatch(/^MIN_NODE="26\.0\.0"$/m);
   });
 });

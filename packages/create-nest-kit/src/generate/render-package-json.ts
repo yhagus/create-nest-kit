@@ -5,7 +5,9 @@ import { PINNED_NODE_VERSION } from './pinned-node-version.ts';
 import { sortKeys } from './sort-keys.ts';
 
 const INITIAL_VERSION = '0.0.1';
-const NODE_ENGINE_RANGE = `^${PINNED_NODE_VERSION}`;
+// Any release of the pinned major: package managers that enforce engines (yarn) then accept
+// a patch older than the pin.
+const NODE_ENGINE_RANGE = `^${PINNED_NODE_VERSION.split('.')[0]}.0.0`;
 
 export function renderPackageJson(options: ProjectOptions, manifest: MergedManifest): string {
   const packageManager = packageManagerPin(options.packageManager, options.packageManagerVersion);

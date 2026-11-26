@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@10.12.1",
   "engines": {
-    "node": ">=24.15"
+    "node": ">=26"
   },
   "scripts": {
     "build": "pnpm -r build",
@@ -18,7 +18,7 @@
     "test:installer": "pnpm build && node scripts/pack-release.ts && pnpm --filter create-nest-kit test:installer"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
+    "@types/node": "26.6.6",
     "oxlint": "1.89.0",
     "prettier": "3.9.10",
     "typescript": "6.0.3"

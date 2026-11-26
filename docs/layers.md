@@ -223,7 +223,7 @@ managers (`src/package-manager-choice.ts`); `--yes` uses npm then. Corepack in t
 since corepack doesn't manage them.
 
 The pinned Node version is `PINNED_NODE_VERSION` in `src/generate/pinned-node-version.ts`;
-`engines` and the dev container's image derive from it. `templates/base/_nvmrc` and the
+`engines` (`^<major>.0.0`, any release of that major) and the dev container's image derive from it. `templates/base/_nvmrc` and the
 Dockerfile repeat it as literals, and `tests/rendered-files/node-version.test.ts` fails when they
 drift.
 

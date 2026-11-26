@@ -19,7 +19,7 @@ const ARCHIVE_NAME = 'create-nest-kit.tar.gz';
 
 /** Generous: the first run pulls the images. */
 const SCENARIO_TIMEOUT_MS = 5 * 60_000;
-const NODE_TOO_OLD = 'Node.js 24.15 or newer';
+const NODE_TOO_OLD = 'Node.js 26 or newer';
 const DOWNLOADING = 'Downloading';
 const DRY_RUN_PLAN = 'Layers:\n  base\n  layout/nested\n  platform/fastify\n';
 
@@ -78,20 +78,20 @@ describe('install.sh', { timeout: SCENARIO_TIMEOUT_MS }, () => {
     expect(result).toMatchObject({ exitCode: 0 });
   });
 
-  it('installs and runs the CLI on node:24', async () => {
-    const result = await runInContainer('node:24', 'sh /install.sh my-api --yes --dry-run');
+  it('installs and runs the CLI on node:26', async () => {
+    const result = await runInContainer('node:26', 'sh /install.sh my-api --yes --dry-run');
 
     expect(result).toMatchObject({ exitCode: 0 });
     expect(result.stderr).toMatch(/Checksum verified/);
     expect(result.stdout).toContain(DRY_RUN_PLAN);
   });
 
-  it('refuses node:22 before downloading', async () => {
-    const result = await runInContainer('node:22', 'sh /install.sh --yes --dry-run');
+  it('refuses node:24 before downloading', async () => {
+    const result = await runInContainer('node:24', 'sh /install.sh --yes --dry-run');
 
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toContain(NODE_TOO_OLD);
-    expect(result.stderr).toMatch(/node {6}v22\./);
+    expect(result.stderr).toMatch(/node {6}v24\./);
     expect(result.stderr).not.toContain(DOWNLOADING);
   });
 
@@ -100,13 +100,13 @@ describe('install.sh', { timeout: SCENARIO_TIMEOUT_MS }, () => {
 
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toMatch(/node {6}not found/);
-    expect(result.stderr).toMatch(/https:\/\/nodejs\.org.*fnm install 24.*nvm install 24/);
+    expect(result.stderr).toMatch(/https:\/\/nodejs\.org.*fnm install 26.*nvm install 26/);
     expect(result.stderr).not.toContain(DOWNLOADING);
   });
 
   it('aborts on a tampered archive', async () => {
     const result = await runInContainer(
-      'node:24',
+      'node:26',
       [
         'mkdir /tampered',
         'cp /release/* /tampered/',
@@ -120,11 +120,11 @@ describe('install.sh', { timeout: SCENARIO_TIMEOUT_MS }, () => {
     expect(result.stdout).not.toContain(DRY_RUN_PLAN);
   });
 
-  it('runs under busybox sh on node:24-alpine', async () => {
+  it('runs under busybox sh on node:26-alpine', async () => {
     // Busybox wget can't read file:// URLs, so the test installs curl; real installs over https
     // work with busybox wget.
     const result = await runInContainer(
-      'node:24-alpine',
+      'node:26-alpine',
       'apk add --no-cache --quiet curl && sh /install.sh my-api --yes --dry-run',
     );
 
@@ -134,12 +134,12 @@ describe('install.sh', { timeout: SCENARIO_TIMEOUT_MS }, () => {
 
   it('leaves the CLI itself to refuse an old Node.js with a friendly message', async () => {
     const result = await runInContainer(
-      'node:22',
+      'node:24',
       `mkdir /cli && tar -xzf /release/${ARCHIVE_NAME} -C /cli && node /cli/create-nest-kit/dist/cli.js --version`,
     );
 
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toMatch(/needs Node\.js 24\.15\.0 or newer, but this is Node\.js 22\./);
+    expect(result.stderr).toMatch(/needs Node\.js 26\.0\.0 or newer, but this is Node\.js 24\./);
   });
 });
 
@@ -151,7 +151,7 @@ describe('release/install.sh', { timeout: SCENARIO_TIMEOUT_MS }, () => {
   it('downloads its own release by default', async () => {
     const version = await readPackageVersion();
 
-    const result = await runInContainer('node:24', RUN_RELEASE_COPY, OFFLINE);
+    const result = await runInContainer('node:26', RUN_RELEASE_COPY, OFFLINE);
 
     expect(result.stderr).toContain(
       `${DOWNLOADING} https://github.com/yhagus/create-nest-kit/releases/download/v${version}/${ARCHIVE_NAME}`,
@@ -160,7 +160,7 @@ describe('release/install.sh', { timeout: SCENARIO_TIMEOUT_MS }, () => {
 
   it('downloads NEST_KIT_VERSION when it is set', async () => {
     const result = await runInContainer(
-      'node:24',
+      'node:26',
       `export NEST_KIT_VERSION=v9.9.9; ${RUN_RELEASE_COPY}`,
       OFFLINE,
     );
