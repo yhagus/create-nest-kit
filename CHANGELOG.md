@@ -1,3 +1,28 @@
+# v2.1.0 (2026-11-26)
+
+#### Notable changes
+
+**Upgrade**
+* Generated projects are pinned to Node 26.13.1 (LTS): `.nvmrc`, the Dockerfile, the compose dev image, `engines` (`^26.13.1`) and `@types/node` (26.6.6). Regenerate, or update these by hand in an existing project. GitHub CI now reads `.nvmrc` – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+* Node 26 no longer bundles corepack, so the Dockerfile, the CI and the compose dev container install `corepack@0.36.0` explicitly. Keep that step when updating a Generated project by hand – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+* The installer itself still runs on Node >=24.15; only Generated projects need Node 26 – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+* `--remote` together with `--no-git` is now rejected – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+
+**CI provider**
+* New CI provider Option: the Wizard always asks for it, preselected from the Remote host, and `--ci github|gitlab|none` sets it without the prompt (default `github`) – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+* `gitlab` writes a `.gitlab-ci.yml` with a Node image, corepack and bun setup, a package store cached under `.ci-cache/`, merge request and `main` pipelines, and a web job for fullstack projects. It uses a `docker:dind` service for Testcontainers, so runners must be privileged – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+* `none` writes no CI file – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+
+**Git and Remote**
+* `git init` now creates the `main` branch – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+* New optional Remote prompt and `--remote <url>` Option register `origin`. The installer never pushes; the next steps show `git push -u origin main` – [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d)
+
+#### Features
+* `general`
+  * [d7cb403](https://github.com/yhagus/create-nest-kit/commit/d7cb4037d32181d96505847883c1ed46f6df033d) feat: pin node 26 and add --remote and --ci github|gitlab|none
+
+**Full Changelog**: https://github.com/yhagus/create-nest-kit/compare/v2.0.0...v2.1.0
+
 # v2.0.0 (2026-11-20)
 
 Generated projects keep only feature tests: every test drives the app from outside and runs against real services.
